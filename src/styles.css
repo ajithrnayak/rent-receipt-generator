@@ -130,19 +130,27 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .results { display: flex; flex-direction: column; gap: 16px; }
 .results-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .results h2 { margin: 0; font-size: 22px; font-weight: 700; }
-.minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
-.mini { position: relative; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.45; box-shadow: 0 1px 2px rgba(0,0,0,.05); color: var(--muted); }
-.mini-top { display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
-.mini-title { font-size: 18px; font-weight: 700; color: var(--ink); }
-.mini-amount { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
-.mini-period { color: var(--body); }
-.mini-address { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 56px; }
-.mini-stamp { position: absolute; right: 12px; bottom: 12px; border: 2px solid var(--accent); color: var(--accent); border-radius: 6px; padding: 2px 6px; font-size: 10px; font-weight: 700; letter-spacing: .1em; transform: rotate(-8deg); }
+.sheet { list-style: none; margin: 0; padding: 0 40px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-ctl); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(20,23,28,.06); }
+.slip { padding: 32px 0 36px; color: var(--body); }
+.slip + .slip { border-top: 1px dashed var(--blank); }
+.slip-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slip-kicker { font-weight: 600; color: var(--ink); letter-spacing: .02em; }
+.slip-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; padding: 4px 0 12px; border-bottom: 1px solid var(--control); color: var(--muted); font-size: 14px; }
+.slip-title { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+.slip-sentence { margin: 16px 0 12px; font-size: 16px; line-height: 1.6; }
+.slip-sentence strong { font-weight: 600; color: var(--ink); }
+.slip-rows { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.slip-rows div { display: grid; grid-template-columns: 9.5em 1fr; gap: 12px; align-items: baseline; }
+.slip-rows dt { font-size: 13px; color: var(--muted); }
+.slip-rows dd { margin: 0; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.slip-sign { display: flex; justify-content: flex-end; align-items: flex-end; gap: 24px; margin-top: 20px; font-size: 12px; color: var(--muted); }
+.slip-sign-line { display: flex; flex-direction: column; gap: 6px; width: min(260px, 50%); }
+.slip-sign-line > div { border-bottom: 1px solid var(--ink); height: 40px; }
+.slip-stamp { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; white-space: nowrap; }
+.slip-stamp > div { width: 64px; height: 64px; border: 1px dashed var(--blank); display: flex; align-items: center; justify-content: center; text-align: center; }
 
 @keyframes printOut { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes stamp { 0% { transform: scale(1.6) rotate(-14deg); opacity: 0; } 60% { transform: scale(.95) rotate(-8deg); opacity: 1; } 100% { transform: scale(1) rotate(-8deg); opacity: 1; } }
 .printed { animation: printOut .45s ease-out both; }
-.printed .mini-stamp { animation: stamp .5s .35s ease-out both; }
 
 /* What else you'll need, footer */
 .extras { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); padding: 20px 24px; font-size: 15px; color: var(--body); }
@@ -169,7 +177,7 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .noscript { background: var(--paper); border-radius: var(--r-card); padding: 20px 24px; margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .printed, .printed .mini-stamp { animation: none; }
+  .printed { animation: none; }
   .blank { transition: none; }
 }
 
@@ -190,4 +198,9 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
   .strip { padding: 16px 20px; }
   .mode { padding-left: 0; }
   .punct { display: none; }
+  .sheet { padding: 0 20px; }
+  .slip { padding: 24px 0 28px; }
+  .slip-title { font-size: 22px; }
+  .slip-rows div { grid-template-columns: 1fr; gap: 0; }
+  .slip-sign-line { width: 100%; }
 }

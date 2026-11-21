@@ -62,6 +62,13 @@ describe('layout', () => {
     expect(await texts(stay({ till: m(2026, 4), sign: false }))).not.toContain('₹1 stamp');
   });
 
+  it('puts nothing but receipts on the page: no credit, link or branding', async () => {
+    const { c, ops } = fakeCanvas();
+    await renderReceipts(c, buildReceipts('Priya', [stay()]));
+    const drawn = ops.filter((o) => o.op === 'text').map((o) => String(o.args[0]).toLowerCase());
+    expect(drawn.filter((t) => /ajith|\.xyz|made by|https?:|www\./.test(t))).toEqual([]);
+  });
+
   it('wraps by words and breaks a word longer than the line', () => {
     const measure = { width: (t: string, _f: unknown, size: number) => t.length * size * 0.5 };
     const lines = wrap(measure, [{ text: 'aaaa bbbb cccc', font: 'regular' }], 10, 50); // 10 chars per line

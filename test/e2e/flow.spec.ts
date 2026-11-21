@@ -62,6 +62,7 @@ test('fills one stay, quarterly with stamp boxes, and downloads a PDF', async ({
   expect(text).toContain('Rupees Eighty Four Thousand only');
   expect(text).toContain('1 April 2026 to 30 June 2026');
   expect(text).not.toContain('a month'); // total only (agreed 2026-11-22)
+  expect(text).not.toMatch(/ajith|made by/i); // no credit on the receipts
   expect(text).toContain('Date: 1 July 2026');
   expect(text).toContain('October 2026'); // the last quarter is cut to the stay
   expect(text).toContain('Mode of payment');

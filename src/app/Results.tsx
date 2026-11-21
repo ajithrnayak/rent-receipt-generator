@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { formatINR } from '../lib/money.ts';
-import { receiptDateOf, spanOf, spanTitle } from '../lib/months.ts';
 import type { Receipt } from '../lib/receipts.ts';
+import { FIXED, wordingOf } from '../lib/wording.ts';
 
 interface Props {
   receipts: Receipt[];
@@ -9,6 +8,7 @@ interface Props {
   filename: string;
 }
 
+/** The receipts as they appear in the PDF: one sheet, receipts in rows, a dashed cut line between them. */
 export function Results({ receipts, url, filename }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   // Move focus to the result so keyboard and screen-reader users land on the download.
@@ -25,24 +25,42 @@ export function Results({ receipts, url, filename }: Props) {
           Download PDF
         </a>
       </div>
-      <ol class="minis">
+      <ol class="sheet" aria-label="Preview of the receipts in the PDF">
         {receipts.map((r, i) => {
-          const p = spanOf(r.from, r.till);
+          const w = wordingOf(r);
           return (
-            <li key={`${r.no}-${url}`} class="printed" style={{ animationDelay: `${Math.min(i * 60, 900)}ms` }}>
-              <div class="mini">
-                <div class="mini-top">
-                  <span>Rent receipt</span>
-                  <span>No. {r.no}</span>
-                </div>
-                <div class="mini-title">{spanTitle(r.from, r.till)}</div>
-                <div class="mini-amount">₹{formatINR(r.amount)}</div>
-                <div class="mini-period">{p.from} – {p.to}</div>
-                <div>Dated {receiptDateOf(r.till)}</div>
-                <div>{r.tenant} → {r.owner}</div>
-                <div class="mini-address">{r.address}</div>
-                <div class="mini-stamp" aria-hidden="true">PAID</div>
+            <li key={`${r.no}-${url}`} class="slip printed" style={{ animationDelay: `${Math.min(i * 60, 900)}ms` }}>
+              <div class="slip-top">
+                <span class="slip-kicker">{FIXED.kicker}</span>
+                <span>{w.no}</span>
               </div>
+              <div class="slip-head">
+                <h3 class="slip-title">{w.title}</h3>
+                <span>{w.date}</span>
+              </div>
+              <p class="slip-sentence">
+                {w.sentence.map((run) => (run.font === 'regular' ? run.text : <strong>{run.text}</strong>))}
+              </p>
+              <dl class="slip-rows">
+                {w.rows.map(([label, value]) => (
+                  <div>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {w.sign && (
+                <div class="slip-sign" aria-hidden="true">
+                  <div class="slip-sign-line">
+                    <div />
+                    <span>{FIXED.signature}</span>
+                  </div>
+                  <div class="slip-stamp">
+                    <div>{FIXED.stamp}</div>
+                    <span>{FIXED.stampCaption}</span>
+                  </div>
+                </div>
+              )}
             </li>
           );
         })}
