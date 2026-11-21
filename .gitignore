@@ -1,0 +1,9 @@
+node_modules/
+dist/
+spike/out/
+spike/dist/
+.DS_Store
+*.log
+.wrangler/
+test-results/
+playwright-report/

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rent-receipt-generator.ajith.xyz/sitemap.xml

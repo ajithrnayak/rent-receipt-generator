@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Free Rent Receipt Generator for HRA: PDF, No Sign-up</title>
+<meta name="description" content="Make rent receipts for HRA in your browser: monthly or quarterly, several homes in one PDF, Indian number format and amount in words. No email, no phone number, nothing leaves your device.">
+<link rel="canonical" href="https://rent-receipt-generator.ajith.xyz/">
+<meta name="theme-color" content="#EEF0F3">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossorigin>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Free rent receipt generator for HRA">
+<meta property="og:description" content="Rent receipts without the paperwork. One PDF for every month, made on your device. No email, no phone number.">
+<meta property="og:url" content="https://rent-receipt-generator.ajith.xyz/">
+<meta property="og:locale" content="en_IN">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Rent receipt generator for HRA",
+  "url": "https://rent-receipt-generator.ajith.xyz/",
+  "description": "Make rent receipts for HRA in your browser: monthly or quarterly, several homes in one PDF, Indian number format and amount in words. Nothing you type leaves your device.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires JavaScript",
+  "inLanguage": "en-IN",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "author": { "@type": "Person", "name": "Ajith", "url": "https://ajith.xyz" }
+}
+</script>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <p class="badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+      <span>Privacy-first rent receipt generator</span>
+    </p>
+    <h1>Free rent receipt generator for HRA</h1>
+    <p class="subtitle">Rent receipts, without the paperwork.</p>
+    <p class="lede">Fill in the blanks on the receipt itself and get one PDF for every month or quarter. Moved or your rent changed? Add another stay. Nothing you type leaves this page.</p>
+    <button type="button" class="link-btn" id="why-open" aria-haspopup="dialog" hidden>Why use this?</button>
+  </header>
+
+  <main id="tool">
+    <noscript><p class="noscript">This tool needs JavaScript to build your PDF on your device. Nothing is ever sent anywhere.</p></noscript>
+  </main>
+
+  <aside class="extras" aria-labelledby="extras-title">
+    <h2 id="extras-title">What else your employer may ask for</h2>
+    <ul>
+      <li>Your HRA declaration: Form 124 from April 2026 (Form 12BB before that).</li>
+      <li>A rent agreement.</li>
+      <li>The owner’s PAN, if rent is over ₹1 lakh in a financial year.</li>
+      <li>Bank statements, if you paid online.</li>
+    </ul>
+    <p>Rules change; for the latest, see the <a href="https://www.incometax.gov.in/">Income Tax Department’s portal</a> or ask your employer.</p>
+  </aside>
+
+  <footer class="site-footer">
+    <p>Free, private, and made by <a href="https://ajith.xyz">Ajith</a>. Use it for rent you have actually paid.</p>
+    <p>No cookies, no tracking, and nothing you type is ever sent anywhere: everything happens in your browser.</p>
+  </footer>
+</div>
+
+<dialog class="why" id="why" aria-labelledby="why-title">
+  <div class="why-inner">
+    <div class="why-head">
+      <h2 id="why-title">Why use this?</h2>
+      <button type="button" class="why-close" data-close aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <ul>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>Nothing leaves your device</strong><span>No email, no phone number, no sign-up. Your name, address and your owner’s PAN stay in this browser tab.</span></div></li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>No ads on your receipts</strong><span>Your employer sees a rent receipt, not someone’s logo. One small credit at the foot of each page, that’s all.</span></div></li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>Knows the rules</strong><span>Tells you when you need a revenue stamp, a signature or your owner’s PAN, and adds the boxes only when you want them.</span></div></li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>Moved during the year? One PDF</strong><span>Add a stay for each home, owner or rent change, monthly or quarterly. Every receipt lands in a single file, in date order.</span></div></li>
+      <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>A clean PDF made for printing</strong><span>Two receipts per A4 page, nothing in the margins: no web addresses, timestamps or page clutter.</span></div></li>
+    </ul>
+    <button type="button" class="btn btn-primary" data-close>Love it, let’s go</button>
+  </div>
+</dialog>
+
+<script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

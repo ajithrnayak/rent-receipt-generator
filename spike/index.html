@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF library test</title>
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 2rem 1rem; background: #EEF0F3; color: #14171C; }
+  button { font: inherit; min-height: 44px; padding: 0 1rem; margin: 0 .5rem .5rem 0; }
+</style>
+</head>
+<body>
+<h1>PDF library test</h1>
+<p>Each button makes the same 12 receipts and downloads the PDF.</p>
+<button type="button" data-lib="libpdf">LibPDF</button>
+<button type="button" data-lib="jspdf">jsPDF</button>
+<button type="button" data-lib="pdflib">pdf-lib</button>
+<p><output aria-live="polite"></output></p>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>
