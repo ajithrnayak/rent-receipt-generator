@@ -19,7 +19,8 @@
     "fonts": "node scripts/subset-fonts.ts",
     "test:e2e": "playwright test",
     "og": "node scripts/og-image.mjs",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "sample": "node scripts/sample-receipt.ts"
   },
   "dependencies": {
     "@libpdf/core": "0.5.3",
@@ -32,6 +33,7 @@
     "@types/node": "22.19.1",
     "jspdf": "4.2.1",
     "pdf-lib": "1.17.1",
+    "preact-render-to-string": "6.8.3",
     "subset-font": "2.9.0",
     "typescript": "6.0.3",
     "vite": "8.3.8",

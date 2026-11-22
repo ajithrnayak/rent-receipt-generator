@@ -28,10 +28,44 @@ function cspMeta(): Plugin {
   };
 }
 
+const JSX = { runtime: 'automatic', importSource: 'preact' } as const;
+
+/**
+ * Renders the form's starting state into index.html at build time, so crawlers and
+ * the first paint see the receipt without waiting for JavaScript (and nothing jumps
+ * when it mounts). In the browser, main.tsx replaces it with the live form.
+ */
+function prerenderForm(): Plugin {
+  return {
+    name: 'prerender-form',
+    apply: 'build',
+    async transformIndexHtml(html) {
+      const { createServer } = await import('vite');
+      const { renderToString } = await import('preact-render-to-string');
+      const { h } = await import('preact');
+      const server = await createServer({
+        configFile: false,
+        logLevel: 'error',
+        appType: 'custom',
+        server: { middlewareMode: true, hmr: false },
+        oxc: { jsx: JSX },
+      });
+      try {
+        const { App } = await server.ssrLoadModule('/src/app/App.tsx');
+        const markup = renderToString(h(App, null));
+        if (!html.includes('<main id="tool">')) throw new Error('prerender-form: <main id="tool"> not found');
+        return html.replace('<main id="tool">', `<main id="tool">${markup}`);
+      } finally {
+        await server.close();
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [cspMeta()],
+  plugins: [cspMeta(), prerenderForm()],
   oxc: {
-    jsx: { runtime: 'automatic', importSource: 'preact' },
+    jsx: JSX,
   },
   build: {
     target: 'es2022',

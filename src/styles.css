@@ -161,6 +161,16 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 @keyframes printOut { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
 .printed { animation: printOut .45s ease-out both; }
 
+/* Rent receipt format: a sample from the real PDF, and how it works */
+.sample { display: flex; flex-direction: column; gap: 12px; color: var(--body); }
+.sample h2 { margin: 0; font-size: 22px; font-weight: 700; color: var(--ink); }
+.sample h3 { margin: 12px 0 0; font-size: 17px; font-weight: 600; color: var(--ink); }
+.sample p { margin: 0; }
+.sample figure { margin: 4px 0 0; }
+.sample img { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(20,23,28,.06); }
+.sample figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.sample ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+
 /* What else you'll need, footer */
 .extras { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); padding: 20px 24px; font-size: 15px; color: var(--body); }
 .extras h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; color: var(--ink); }

@@ -160,3 +160,14 @@ test('no horizontal scroll', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test('crawlers and first paint get the receipt without JavaScript; the sample receipt loads', async ({ page, request }) => {
+  // The raw HTML (no JavaScript run) already holds the receipt form and the format section.
+  const html = await (await request.get('/')).text();
+  expect(html).toContain('Received with thanks from');
+  expect(html).toContain('Rent receipt format');
+  await page.goto('/');
+  const img = page.getByRole('img', { name: /A sample rent receipt/ });
+  await img.scrollIntoViewIfNeeded();
+  await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
+});

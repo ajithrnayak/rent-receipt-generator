@@ -1,0 +1,11 @@
+# Rent receipt generator for HRA
+
+> A free rent receipt generator for Indian salaried employees claiming HRA (house rent allowance). No email, no phone number, no sign-up: everything happens in the browser and nothing typed is uploaded. https://rent-receipt-generator.ajith.xyz
+
+- Fill in the blanks on the receipt itself: tenant name, monthly rent, house address, owner's name and (optional) PAN.
+- One PDF with a receipt for every month or quarter; quarters follow the financial year (April to March). Several homes or rent changes ("stays") go into the same PDF in date order.
+- Each receipt shows the amount in Indian number format and in words, the exact period (for example 1 April 2026 to 30 April 2026) and a receipt date (the 1st of the next month; 31 March for March).
+- Optional signature line, ₹1 revenue-stamp box and payment mode. The tool explains when the owner's PAN is needed (rent over ₹1 lakh in a financial year) and when a revenue stamp applies (receipts over ₹5,000).
+- A4, two receipts per page, no ads, logos or links on the receipts.
+- Privacy: no server; a Content-Security-Policy with connect-src 'none' blocks every network connection. Source code: https://github.com/ajithrnayak/rent-receipt-generator
+- Not tax advice. Made by Ajith (https://ajith.xyz).

@@ -8,6 +8,8 @@
 <link rel="canonical" href="https://rent-receipt-generator.ajith.xyz/">
 <meta name="theme-color" content="#EEF0F3">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/inter-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/caveat-700.woff2" as="font" type="font/woff2" crossorigin>
@@ -34,6 +36,17 @@
   "inLanguage": "en-IN",
   "isAccessibleForFree": true,
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "featureList": [
+    "No email, no phone number, no sign-up",
+    "Everything happens in the browser; nothing is uploaded",
+    "Monthly or quarterly receipts",
+    "Several homes or rent changes in one PDF, in date order",
+    "Indian number format and amount in words",
+    "Optional signature line and revenue-stamp box",
+    "Tells you when the owner's PAN is needed"
+  ],
+  "screenshot": "https://rent-receipt-generator.ajith.xyz/sample-receipt.png",
+  "image": "https://rent-receipt-generator.ajith.xyz/og.png",
   "author": { "@type": "Person", "name": "Ajith", "url": "https://ajith.xyz" }
 }
 </script>
@@ -52,6 +65,21 @@
   <main id="tool">
     <noscript><p class="noscript">This tool needs JavaScript to build your PDF on your device. Nothing is ever sent anywhere.</p></noscript>
   </main>
+
+  <section class="sample" aria-labelledby="sample-title">
+    <h2 id="sample-title">Rent receipt format</h2>
+    <p>Every receipt in the PDF looks like this: half an A4 page, so two print on each sheet with a cut line between them.</p>
+    <figure>
+      <img src="/sample-receipt.png" width="1240" height="877" loading="lazy" decoding="async" alt="A sample rent receipt for April to June 2026: received with thanks from Priya Raghavan the sum of ₹84,000 (Rupees Eighty Four Thousand only) towards rent for 14, 2nd Cross, Indiranagar, Bengaluru, for the period 1 April 2026 to 30 June 2026, dated 1 July 2026, received by K. S. Venkatesh, PAN ABCPV1234K, paid in cash, with a line for the owner’s signature and a box for a ₹1 revenue stamp.">
+      <figcaption>A sample quarterly receipt, paid in cash, with the owner’s signature line and revenue-stamp box. Made by this tool.</figcaption>
+    </figure>
+    <h3>How it works</h3>
+    <ol>
+      <li>Fill in the blanks on the receipt: your name, the monthly rent, the house address and the owner. Moved or your rent changed? Add another stay.</li>
+      <li>Choose one receipt a month or one a quarter, and add a signature line and stamp box if you need them.</li>
+      <li>Generate and download one PDF with every receipt in date order. Print it and have the owner sign each one.</li>
+    </ol>
+  </section>
 
   <aside class="extras" aria-labelledby="extras-title">
     <h2 id="extras-title">What else your employer may ask for</h2>
