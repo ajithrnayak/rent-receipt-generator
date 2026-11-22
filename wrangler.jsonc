@@ -1,0 +1,16 @@
+// Cloudflare Workers static assets: serves the Vite build in dist/. No Worker script.
+// Security headers (the CSP above all) come from public/_headers, copied into dist/.
+{
+  "name": "rent-receipt-generator",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "none",
+    "html_handling": "auto-trailing-slash"
+  },
+  // The Worker is the origin for this hostname; Cloudflare creates the DNS record and certificate.
+  "routes": [{ "pattern": "rent-receipt-generator.ajith.xyz", "custom_domain": true }],
+  // Branch Previews on workers.dev for testing; production only on the custom domain.
+  "workers_dev": false,
+  "preview_urls": true
+}

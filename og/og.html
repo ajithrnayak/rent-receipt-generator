@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en-IN"><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Inter; src: url(../public/fonts/inter-400.woff2); font-weight: 400; }
+@font-face { font-family: Inter; src: url(../public/fonts/inter-600.woff2); font-weight: 600; }
+@font-face { font-family: Inter; src: url(../public/fonts/inter-700.woff2); font-weight: 700; }
+@font-face { font-family: Caveat; src: url(../public/fonts/caveat-700.woff2); font-weight: 700; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+body { background: #EEF0F3; color: #14171C; font-family: Inter, sans-serif; position: relative; }
+.left { position: absolute; left: 72px; top: 56px; width: 700px; }
+.hand { font-family: Caveat; font-weight: 700; font-size: 108px; line-height: .98; color: #1D3A9E; transform: rotate(-2deg); transform-origin: left bottom; }
+.u { position: relative; white-space: nowrap; }
+.u svg { position: absolute; left: -2%; bottom: -0.2em; width: 104%; height: .26em; overflow: visible; }
+.u path { fill: none; stroke: #1D3A9E; stroke-width: 5; stroke-linecap: round; }
+h1 { margin: 60px 0 0; font-size: 42px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
+.sub { margin-top: 16px; font-size: 24px; color: #4B5563; }
+.url { position: absolute; left: 72px; bottom: 52px; font-size: 22px; font-weight: 600; color: #1F4FC4; }
+.receipt { position: absolute; right: 60px; top: 300px; width: 360px; background: #fff; border-radius: 14px; padding: 30px 30px 26px; box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 24px 60px rgba(20,23,28,.14); transform: rotate(3deg); font-size: 15px; color: #374151; }
+.k { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; letter-spacing: .12em; color: #14171C; }
+.k span:last-child { font-weight: 400; letter-spacing: 0; color: #4B5563; }
+.t { font-size: 30px; font-weight: 700; color: #14171C; margin: 8px 0 4px; letter-spacing: -0.01em; }
+.d { font-size: 14px; color: #4B5563; padding-bottom: 12px; border-bottom: 1px solid #D1D5DB; }
+.s { margin: 14px 0; line-height: 1.55; }
+.s b { color: #14171C; font-weight: 600; }
+.sign { display: flex; justify-content: flex-end; align-items: flex-end; gap: 16px; margin-top: 18px; font-size: 12px; color: #4B5563; }
+.line { flex: 1; border-bottom: 1px solid #14171C; height: 34px; }
+.stamp { width: 56px; height: 56px; border: 1px dashed #7C8594; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+</style></head>
+<body>
+  <div class="left">
+    <div class="hand">No email.<br><span class="u">No phone number.<svg viewBox="0 0 300 20" preserveAspectRatio="none"><path d="M2 14 C 60 4, 140 18, 200 9 S 280 6, 298 11"/></svg></span></div>
+    <h1>Free rent receipt generator<br>for HRA</h1>
+    <div class="sub">One PDF, made on your device.</div>
+  </div>
+  <div class="receipt">
+    <div class="k"><span>RENT RECEIPT</span><span>No. 1</span></div>
+    <div class="t">April – June 2026</div>
+    <div class="d">Date: 1 July 2026</div>
+    <div class="s">Received with thanks from <b>Priya Raghavan</b> the sum of <b>₹84,000</b> (Rupees Eighty Four Thousand only) towards rent for the period <b>1 April to 30 June 2026</b>.</div>
+    <div class="sign"><div class="line"></div><div class="stamp">₹1 stamp</div></div>
+  </div>
+  <div class="url">rent-receipt-generator.ajith.xyz</div>
+</body></html>

@@ -25,7 +25,9 @@ Node 22.18 or later.
 | `npm run preview` | Serve the build (with the CSP) |
 | `npm test` | Unit tests (Vitest) |
 | `npm run test:e2e` | Browser tests (Playwright: Chrome, Firefox, WebKit, phone sizes) |
-| `npm run fonts` | Re-subset Inter after changing `src/lib/charset.ts` |
+| `npm run fonts` | Re-subset Inter (and Caveat) after changing `src/lib/charset.ts` or the headline |
+| `npm run og` | Render the link-preview image `public/og.png` from `og/og.html` |
+| `npm run deploy` | Build and deploy to Cloudflare (`wrangler.jsonc`; needs `wrangler login`) |
 
 ## Layout
 
@@ -38,8 +40,9 @@ Node 22.18 or later.
 | `fonts/source/` | Inter 4.1 (SIL OFL); `public/fonts/` and `src/assets/fonts/pdf/` are generated subsets |
 | `public/_headers` | Security headers for Cloudflare static assets |
 | `spike/` | The PDF library comparison (LibPDF, jsPDF, pdf-lib) that chose LibPDF |
-| `test/` | Unit tests; `test/e2e/` browser tests |
+| `test/` | Unit tests; `test/e2e/` browser tests, including axe accessibility scans |
+| `wrangler.jsonc` | Cloudflare static-assets Worker on `rent-receipt-generator.ajith.xyz` |
 
 ## Licences
 
-Code: MIT. Inter: SIL Open Font License 1.1 (`fonts/source/OFL-inter.txt`).
+Code: MIT. Fonts: Inter and Caveat, SIL Open Font License 1.1 (`fonts/source/OFL-inter.txt`, `fonts/source/OFL-caveat.txt`).
