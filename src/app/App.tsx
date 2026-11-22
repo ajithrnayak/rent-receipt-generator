@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { shortLabel, yearOf } from '../lib/months.ts';
-import { buildReceipts, periodsOf, rentByFinancialYear, type Receipt } from '../lib/receipts.ts';
+import { buildReceipts, panNeeded, periodsOf, rentByFinancialYear, type Receipt } from '../lib/receipts.ts';
 import { initialState, reducer, today as getToday } from './state.ts';
 import { StayCard } from './StayCard.tsx';
 import { Results } from './Results.tsx';
@@ -37,8 +37,8 @@ export function App() {
   const tenantRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // The cursor starts on the first blank.
-  useEffect(() => tenantRef.current?.focus(), []);
+  // The cursor starts on the first blank, without scrolling: on phones the headline must stay in view.
+  useEffect(() => tenantRef.current?.focus({ preventScroll: true }), []);
 
   const receipts = useMemo(() => buildReceipts(state.tenant, state.stays), [state.tenant, state.stays]);
   const totals = useMemo(() => rentByFinancialYear(state.stays), [state.stays]);
@@ -102,6 +102,9 @@ export function App() {
     blanks[blanks.indexOf(el) + 1]?.focus();
   }
 
+  // The PAN total is page-wide: say it once, on the first stay that needs the PAN and lacks it.
+  const panNoteAt = state.stays.findIndex((s) => !s.pan && panNeeded(state.stays, s, totals).needed);
+
   const working = gen.status === 'working';
   // Count what the chosen months will make, even before rent is typed.
   const n = state.stays.reduce((sum, s) => sum + periodsOf(s).length, 0);
@@ -122,21 +125,13 @@ export function App() {
             totals={totals}
             dispatch={dispatch}
             tenantRef={index === 0 ? tenantRef : undefined}
+            showPanNote={index === panNoteAt}
           />
         ))}
 
-        <p class="no-email">
-          <s>Email address</s> Not needed. We don’t collect anything, so there’s nothing to send.
-        </p>
-
-        <div class="actions">
-          <button type="button" class="btn btn-secondary" onClick={() => dispatch({ type: 'add' })}>
-            + Add another stay
-          </button>
-          <button type="submit" class="btn btn-primary" disabled={working} aria-disabled={working || undefined}>
-            {working ? 'Making your PDF…' : `Generate ${n} ${n === 1 ? 'receipt' : 'receipts'}`}
-          </button>
-        </div>
+        <button type="button" class="btn btn-secondary add-stay" onClick={() => dispatch({ type: 'add' })}>
+          + Add another stay
+        </button>
 
         {state.tried && missing.length > 0 && (
           <p class="alert" role="alert">Almost there. Fill in the highlighted blanks: {missing.join(', ')}.</p>
@@ -145,9 +140,22 @@ export function App() {
           <p class="alert" role="alert">No months to make receipts for yet. Check the months in each stay.</p>
         )}
         {gen.status === 'error' && <p class="alert" role="alert">{gen.message}</p>}
+
+        {/* On phones this bar sticks to the bottom of the screen while the form scrolls. */}
+        <div class="go">
+          <p class="trust">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+            Made on your device. Nothing is uploaded.
+          </p>
+          <button type="submit" class="btn btn-primary" disabled={working} aria-disabled={working || undefined}>
+            {working ? 'Making your PDF…' : `Generate ${n} ${n === 1 ? 'receipt' : 'receipts'}`}
+          </button>
+        </div>
       </form>
 
-      {gen.status === 'ready' && <Results receipts={gen.receipts} url={gen.url} filename={gen.filename} />}
+      {gen.status === 'ready' && (
+        <Results receipts={gen.receipts} url={gen.url} filename={gen.filename} onEdit={() => tenantRef.current?.focus()} />
+      )}
     </>
   );
 }

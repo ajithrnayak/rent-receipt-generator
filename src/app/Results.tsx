@@ -6,10 +6,12 @@ interface Props {
   receipts: Receipt[];
   url: string;
   filename: string;
+  /** Back to the form to change something. */
+  onEdit: () => void;
 }
 
 /** The receipts as they appear in the PDF: one sheet, receipts in rows, a dashed cut line between them. */
-export function Results({ receipts, url, filename }: Props) {
+export function Results({ receipts, url, filename, onEdit }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   // Move focus to the result so keyboard and screen-reader users land on the download.
   useEffect(() => heading.current?.focus(), [url]);
@@ -31,7 +33,7 @@ export function Results({ receipts, url, filename }: Props) {
           return (
             <li key={`${r.no}-${url}`} class="slip printed" style={{ animationDelay: `${Math.min(i * 60, 900)}ms` }}>
               <div class="slip-top">
-                <span class="slip-kicker">{FIXED.kicker}</span>
+                <span class="kicker">{FIXED.kicker}</span>
                 <span>{w.no}</span>
               </div>
               <div class="slip-head">
@@ -65,6 +67,14 @@ export function Results({ receipts, url, filename }: Props) {
           );
         })}
       </ol>
+      <div class="results-foot">
+        <button type="button" class="link-btn" onClick={onEdit}>
+          Edit details
+        </button>
+        <a class="btn btn-dark" href={url} download={filename}>
+          Download PDF
+        </a>
+      </div>
     </section>
   );
 }

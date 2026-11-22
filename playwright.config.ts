@@ -15,6 +15,8 @@ export default defineConfig({
   projects: [
     { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome' } },
     { name: 'chrome-phone', use: { ...devices['Pixel 7'], channel: 'chrome' } },
+    // A very narrow phone (320 px wide) to catch horizontal scrolling.
+    { name: 'chrome-small', use: { ...devices['Galaxy S9+'], channel: 'chrome' } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'webkit-phone', use: { ...devices['iPhone 15'] } },

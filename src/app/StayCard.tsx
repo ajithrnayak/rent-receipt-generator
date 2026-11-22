@@ -4,7 +4,7 @@ import { amountInWords, formatINR } from '../lib/money.ts';
 import { MONTH_NAMES, fyLabel, monthIndexOf, receiptDateOf, shortLabel, spanTitle, toMonth, yearOf, type Month } from '../lib/months.ts';
 import {
   PAN_PATTERN, PAN_THRESHOLD, STAMP_THRESHOLD, cleanPan, cleanRent, firstOverlap, futureMonths,
-  panNeeded, periodsOf, type PayMode, type Stay,
+  panNeeded, periodsOf, type Frequency, type PayMode, type Stay,
 } from '../lib/receipts.ts';
 import { unprintable } from '../lib/charset.ts';
 import type { Action, Today } from './state.ts';
@@ -20,6 +20,8 @@ interface Props {
   totals: Map<Month, number>;
   dispatch: (a: Action) => void;
   tenantRef?: Ref<HTMLInputElement>;
+  /** The page-wide PAN note shows on one stay only: the first that needs it. */
+  showPanNote: boolean;
 }
 
 type Note = { text: string; kind: 'warn' | 'info' };
@@ -104,7 +106,7 @@ function RentBlank({ id, rent, miss, onRent }: { id: string; rent: number | null
 
 function MonthPick({ id, label, value, years, onPick }: { id: string; label: string; value: Month; years: number[]; onPick: (m: Month) => void }) {
   return (
-    <>
+    <span class="pair">
       <label class="sr-only" for={`${id}-m`}>{`${label} month`}</label>
       <select id={`${id}-m`} class="pick" value={String(monthIndexOf(value))} onChange={(e) => onPick(toMonth(yearOf(value), Number(e.currentTarget.value)))}>
         {MONTH_NAMES.map((name, i) => <option value={String(i)}>{name}</option>)}
@@ -113,11 +115,11 @@ function MonthPick({ id, label, value, years, onPick }: { id: string; label: str
       <select id={`${id}-y`} class="pick" value={String(yearOf(value))} onChange={(e) => onPick(toMonth(Number(e.currentTarget.value), monthIndexOf(value)))}>
         {years.map((y) => <option value={String(y)}>{y}</option>)}
       </select>
-    </>
+    </span>
   );
 }
 
-export function StayCard({ stay, index, stays, tenant, tried, today, years, totals, dispatch, tenantRef }: Props) {
+export function StayCard({ stay, index, stays, tenant, tried, today, years, totals, dispatch, tenantRef, showPanNote }: Props) {
   const id = stay.id;
   const set = (patch: Partial<Omit<Stay, 'id'>>) => dispatch({ type: 'stay', id, patch });
   const multi = stays.length > 1;
@@ -147,9 +149,9 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
       }
     }
   }
-  if (pan.needed && !stay.pan) {
+  if (showPanNote) {
     const where = multi ? 'Rent across your stays' : 'Rent';
-    notes.push({ kind: 'info', text: `${where} comes to ₹${formatINR(pan.total)} in the ${fyLabel(pan.fy!)} financial year, above ₹${formatINR(PAN_THRESHOLD)}, so your employer will ask for the owner’s PAN. Owner has no PAN? Ask your employer what they accept instead.` });
+    notes.push({ kind: 'info', text: `${where} comes to ₹${formatINR(pan.total)} in the ${fyLabel(pan.fy!)} financial year, above ₹${formatINR(PAN_THRESHOLD)}, so your employer will ask for the owner’s PAN${multi ? ' on every stay marked “Needed”' : ''}. Owner has no PAN? Ask your employer what they accept instead.` });
   }
   if (stay.pan && !PAN_PATTERN.test(stay.pan) && (stay.pan.length === 10 || tried)) {
     notes.push({ kind: 'warn', text: 'That PAN doesn’t look right: it’s 5 letters, 4 digits, then a letter.' });
@@ -159,8 +161,6 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
     notes.push({ kind: 'warn', text: `The PDF can only print English letters for now, so ${odd.slice(0, 5).map((c) => `“${c}”`).join(' ')} won’t show. Please type names and the address in English.` });
   }
 
-  const thisFY = stay.from === today.fy && stay.till === today.fyToDate;
-  const lastFY = stay.from === today.fy - 12 && stay.till === today.fy - 1;
   const count = periods.length;
   const rangeLabel = stay.till >= stay.from ? `${shortLabel(stay.from)} – ${shortLabel(stay.till)}` : '—';
   const missTenant = tried && !tenant.trim();
@@ -170,7 +170,7 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
       <div class="paper">
         <div class="paper-head">
           <div class="paper-title">
-            <h2 class="paper-kicker" id={`stay-${id}-title`}>Rent receipt{multi && <span class="sr-only">, {label}</span>}</h2>
+            <h2 class="kicker" id={`stay-${id}-title`}>Rent receipt{multi && <span class="sr-only">, {label}</span>}</h2>
             {multi && <span class="paper-stay" aria-hidden="true">{label}</span>}
           </div>
           {multi && (
@@ -217,9 +217,25 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
         </div>
 
         <p>
-          for every month from <MonthPick id={`from-${id}`} label="From" value={stay.from} years={years} onPick={(from) => set({ from })} /> to{' '}
+          for every{' '}
+          <label class="sr-only" for={`freq-${id}`}>One receipt for every month or quarter</label>
+          <select id={`freq-${id}`} class="pick pick-inline" value={stay.frequency} onChange={(e) => set({ frequency: e.currentTarget.value as Frequency })}>
+            <option value="monthly">month</option>
+            <option value="quarterly">quarter</option>
+          </select>{' '}
+          from <MonthPick id={`from-${id}`} label="From" value={stay.from} years={years} onPick={(from) => set({ from })} /> to{' '}
           <MonthPick id={`till-${id}`} label="Till" value={stay.till} years={years} onPick={(till) => set({ till })} />
           <span class="punct">.</span>
+        </p>
+        <p class="fill">
+          <span>Fill:</span>{' '}
+          <button type="button" class="link-btn" onClick={() => set({ from: today.fy, till: today.fyToDate })}>
+            this financial year so far
+          </button>
+          <span class="fill-sep" aria-hidden="true"> · </span>
+          <button type="button" class="link-btn" onClick={() => set({ from: today.fy - 12, till: today.fy - 1 })}>
+            last financial year
+          </button>
         </p>
 
         <p>
@@ -275,38 +291,20 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
       </div>
 
       <div class="strip">
-        <div class="chips" role="group" aria-label={`Period, ${label}`}>
-          <span class="chips-label" aria-hidden="true">Period</span>
-          <button type="button" class="chip" aria-pressed={thisFY} onClick={() => set({ from: today.fy, till: today.fyToDate })}>
-            This financial year so far
-          </button>
-          <button type="button" class="chip" aria-pressed={lastFY} onClick={() => set({ from: today.fy - 12, till: today.fy - 1 })}>
-            Last financial year
-          </button>
-        </div>
-
-        <div class="chips" role="group" aria-label={`Receipts, ${label}`}>
-          <span class="chips-label" aria-hidden="true">Receipts</span>
-          <button type="button" class="chip" aria-pressed={stay.frequency === 'monthly'} onClick={() => set({ frequency: 'monthly' })}>
-            One a month
-          </button>
-          <button type="button" class="chip" aria-pressed={stay.frequency === 'quarterly'} onClick={() => set({ frequency: 'quarterly' })}>
-            One a quarter
-          </button>
-        </div>
-
         <label class="check">
           <input type="checkbox" checked={stay.sign} onChange={(e) => set({ sign: e.currentTarget.checked })} />
           <span class="check-text">
             <span>Add a signature line and revenue-stamp box</span>
-            <span class="hint">Receipts over ₹5,000 legally carry a ₹1 revenue stamp, signed across by the owner. Paid online? Many employers accept your bank statement instead; check with yours.</span>
+            {!(stay.sign && stay.mode) && (
+              <span class="hint">Receipts over ₹5,000 legally carry a ₹1 revenue stamp, signed across by the owner. Paid online? Many employers accept your bank statement instead; check with yours.</span>
+            )}
           </span>
         </label>
 
         {stay.sign && (
           <div class="mode">
-            <span id={`mode-${id}`} class="hint">How did you pay?</span>
             <div class="chips" role="group" aria-labelledby={`mode-${id}`}>
+              <span id={`mode-${id}`} class="chips-label">Paid by</span>
               {MODES.map(([mode, text]) => (
                 <button type="button" class="chip" aria-pressed={stay.mode === mode} onClick={() => set({ mode })}>{text}</button>
               ))}

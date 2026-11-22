@@ -27,3 +27,7 @@ const web = { 400: 'Inter-Regular.ttf', 500: 'Inter-Medium.ttf', 600: 'Inter-Sem
 for (const [weight, file] of Object.entries(web)) {
   out(`public/fonts/inter-${weight}.woff2`, await subsetFont(src(file), PRINTABLE_TEXT, { targetFormat: 'woff2' }));
 }
+
+// Caveat (SIL OFL) for the handwritten headline only: just the characters it uses.
+const HEADLINE = 'No email. No phone number.';
+out('public/fonts/caveat-700.woff2', await subsetFont(src('Caveat-Bold-latin.woff2'), HEADLINE, { targetFormat: 'woff2' }));

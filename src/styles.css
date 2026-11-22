@@ -5,6 +5,8 @@
 @font-face { font-family: "Inter"; src: url(/fonts/inter-500.woff2) format("woff2"); font-weight: 500; font-display: swap; }
 @font-face { font-family: "Inter"; src: url(/fonts/inter-600.woff2) format("woff2"); font-weight: 600; font-display: swap; }
 @font-face { font-family: "Inter"; src: url(/fonts/inter-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
+/* Caveat, subset to the headline's characters only (scripts/subset-fonts.ts). */
+@font-face { font-family: "Caveat"; src: url(/fonts/caveat-700.woff2) format("woff2"); font-weight: 700; font-display: swap; }
 
 :root {
   color-scheme: light;
@@ -23,6 +25,7 @@
   --accent-tint: #F2F6FF;
   --warn-ink: #9A3412; --warn-bg: #FFF7ED; --warn-line: #FDBA74; --warn-ring: #F97316; --miss: #C2410C;
   --ok-ink: #166534; --ok-bg: #DCFCE7;
+  --hand: #1D3A9E; /* ballpoint blue, 8.6:1 on --bg: darker than --accent so it never reads as a link */
   --r-card: 14px; --r-ctl: 8px;
 }
 
@@ -46,9 +49,12 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 
 /* Header */
 .intro { display: flex; flex-direction: column; gap: 10px; }
-.badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; font-size: 13px; font-weight: 500; color: var(--ok-ink); background: var(--ok-bg); border-radius: 999px; padding: 6px 12px; }
-.intro h1 { margin: 0; font-size: 36px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; }
-.subtitle { margin: 0; font-size: 22px; line-height: 1.3; font-weight: 600; color: var(--body); letter-spacing: -0.01em; }
+.intro h1 { margin: 0; font-weight: 700; }
+.hand { display: block; font-family: Caveat, "Segoe Print", "Bradley Hand", cursive; font-weight: 700; font-size: clamp(38px, 12.5vw, 112px); line-height: .98; letter-spacing: 0; color: var(--hand); transform: rotate(-2deg); transform-origin: left bottom; margin: 8px 0 36px; }
+.hand-underline { position: relative; white-space: nowrap; }
+.hand-underline svg { position: absolute; left: -2%; bottom: -0.2em; width: 104%; height: .26em; overflow: visible; }
+.hand-underline path { fill: none; stroke: var(--hand); stroke-width: 5; stroke-linecap: round; }
+.hero-title { display: block; font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
 .lede { margin: 0; font-size: 17px; color: var(--muted); }
 
 .link-btn { font: inherit; font-size: 14px; font-weight: 500; background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 8px 0; min-height: 44px; align-self: flex-start; }
@@ -78,7 +84,8 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .paper p { margin: 0; }
 .paper-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; line-height: 1.3; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .paper-title { display: flex; align-items: baseline; gap: 12px; }
-.paper-kicker { font-size: 15px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin: 0; }
+/* "RENT RECEIPT": one style on the form, the results and (in spirit) the PDF. */
+.kicker { font-size: 14px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); margin: 0; }
 .paper-stay { font-size: 14px; color: var(--muted); }
 .paper strong { font-weight: 600; }
 .words { color: var(--muted); font-size: 15px; }
@@ -98,6 +105,8 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .pick { font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1.5px solid var(--ink); padding: 2px; margin: 0 2px; border-radius: 0; cursor: pointer; line-height: 1.5; }
 .pick:focus { outline: none; border-bottom-color: var(--accent); background: var(--accent-tint); }
 
+.paper .fill { margin-top: -10px; font-size: 14px; line-height: 1.4; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
+.fill .link-btn { padding: 0; min-height: 32px; }
 .sign-boxes { display: flex; flex-wrap: wrap; gap: 16px 24px; line-height: 1.5; padding-top: 6px; }
 .sign-line { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
 .sign-line > div { height: 52px; border-bottom: 1.5px solid var(--ink); }
@@ -119,10 +128,11 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .count { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; color: var(--body); }
 .count span:last-child { font-variant-numeric: tabular-nums; }
 
-.no-email { margin: 0; font-size: 15px; color: var(--muted); text-align: center; }
-.no-email s { color: var(--faint); }
-.actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.actions .btn-primary { flex: 1; min-width: 220px; }
+.add-stay { align-self: flex-start; }
+.go { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
+.go .btn-primary { flex: 1; min-width: 220px; }
+.trust { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--ok-ink); }
+.results-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .alert { margin: 0; font-size: 15px; color: var(--warn-ink); }
 
 /* Results */
@@ -130,11 +140,10 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .results { display: flex; flex-direction: column; gap: 16px; }
 .results-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .results h2 { margin: 0; font-size: 22px; font-weight: 700; }
-.sheet { list-style: none; margin: 0; padding: 0 40px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-ctl); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(20,23,28,.06); }
+.sheet { list-style: none; margin: 0; padding: 0 40px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(20,23,28,.06); }
 .slip { padding: 32px 0 36px; color: var(--body); }
 .slip + .slip { border-top: 1px dashed var(--blank); }
 .slip-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
-.slip-kicker { font-weight: 600; color: var(--ink); letter-spacing: .02em; }
 .slip-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px 16px; flex-wrap: wrap; padding: 4px 0 12px; border-bottom: 1px solid var(--control); color: var(--muted); font-size: 14px; }
 .slip-title { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
 .slip-sentence { margin: 16px 0 12px; font-size: 16px; line-height: 1.6; }
@@ -189,8 +198,8 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 /* Phones: one blank per line */
 @media (max-width: 520px) {
   .page { padding: 32px 16px 48px; }
-  .intro h1 { font-size: 30px; }
-  .subtitle { font-size: 19px; }
+  .hand { margin-bottom: 26px; }
+  .hero-title { font-size: 24px; }
   .blank, .pick { display: block; width: 100%; margin: 4px 0; min-height: 44px; }
   .blank-rent, .blank-pan, .blank-wide { width: 100%; min-width: 0; }
   .nowrap { white-space: normal; }
@@ -198,6 +207,17 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
   .strip { padding: 16px 20px; }
   .mode { padding-left: 0; }
   .punct { display: none; }
+  .fill .link-btn { min-height: 44px; }
+  .fill { gap: 0 16px; }
+  .fill-sep { display: none; }
+  .pick.pick-inline { display: inline-block; width: auto; margin: 0 2px; }
+  .pair { display: flex; gap: 12px; }
+  .pair .pick { flex: 1; min-width: 0; }
+  .pair .pick + label + .pick { flex: 0 0 38%; }
+  .go { position: sticky; bottom: 0; z-index: 5; flex-direction: column; align-items: stretch; flex-wrap: nowrap; margin: 0 -16px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgba(20,23,28,.06); gap: 6px; }
+  .go .btn-primary { flex: none; min-width: 0; width: 100%; }
+  .trust { justify-content: center; font-size: 13px; }
+  .add-stay { align-self: stretch; }
   .sheet { padding: 0 20px; }
   .slip { padding: 24px 0 28px; }
   .slip-title { font-size: 22px; }

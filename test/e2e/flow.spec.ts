@@ -45,7 +45,7 @@ test('fills one stay, quarterly with stamp boxes, and downloads a PDF', async ({
   await page.getByPlaceholder('Needed').fill('abcpv1234k');
   await expect(page.getByPlaceholder('Needed')).toHaveValue('ABCPV1234K');
 
-  await page.getByRole('button', { name: 'One a quarter' }).click();
+  await page.getByLabel('One receipt for every month or quarter').selectOption('quarterly');
   await expect(page.getByText('3 receipts, one a quarter')).toBeVisible();
   await page.getByLabel('Add a signature line and revenue-stamp box').check();
   await page.getByRole('button', { name: 'Cash' }).click();
@@ -54,7 +54,7 @@ test('fills one stay, quarterly with stamp boxes, and downloads a PDF', async ({
   await page.getByRole('button', { name: 'Generate 3 receipts' }).click();
   await expect(page.getByRole('heading', { name: '3 receipts, ready as one PDF' })).toBeFocused();
 
-  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Download PDF' }).click()]);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Download PDF' }).first().click()]);
   expect(download.suggestedFilename()).toBe('rent-receipts-apr-2026-to-oct-2026.pdf');
   const text = await pdfText((await download.path())!);
   expect(text).toContain('April – June 2026');
@@ -83,7 +83,7 @@ test('highlights missing blanks and moves to the first', async ({ page }) => {
 
 test('a second stay continues the months and flags overlaps', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Last financial year' }).click();
+  await page.getByRole('button', { name: 'last financial year' }).click();
   await page.getByRole('button', { name: '+ Add another stay' }).click();
   const second = page.locator('section.stay').nth(1);
   await expect(second.getByLabel('From month')).toHaveValue('3'); // April
@@ -97,9 +97,18 @@ test('a stay reaching this month says its receipt is dated in the future', async
   await page.getByRole('button', { name: '+ Add another stay' }).click(); // November 2026 only
   await expect(page.getByText('November’s receipt will be dated 1 December 2026. Make it once you’ve paid, or end this stay at Oct 2026.')).toBeVisible();
   const second = page.locator('section.stay').nth(1);
-  await second.getByRole('button', { name: 'One a quarter' }).click();
+  await second.getByLabel('One receipt for every month or quarter').selectOption('quarterly');
   await expect(second.getByText('The November 2026 receipt will be dated 1 December 2026')).toHaveCount(0);
   await expect(second.getByText('November’s receipt will be dated 1 December 2026')).toBeVisible(); // a one-month quarter reads the same
+});
+
+test('the PAN note appears once, however many stays need it', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Monthly rent in rupees').fill('28000');
+  await page.getByRole('button', { name: '+ Add another stay' }).click();
+  await page.locator('section.stay').nth(1).getByLabel('Monthly rent in rupees').fill('30000');
+  await expect(page.getByText('so your employer will ask for the owner’s PAN')).toHaveCount(1);
+  await expect(page.getByPlaceholder('Needed')).toHaveCount(2);
 });
 
 test('the Why dialog opens, closes on Escape and returns focus', async ({ page }) => {
