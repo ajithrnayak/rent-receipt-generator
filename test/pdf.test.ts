@@ -6,9 +6,13 @@ import { toMonth } from '../src/lib/months.ts';
 import { buildReceipts, type Stay } from '../src/lib/receipts.ts';
 import type { Canvas } from '../src/pdf/canvas.ts';
 import { receiptText, renderReceipts, wrap } from '../src/pdf/layout.ts';
-import { createLibPdfCanvas } from '../src/pdf/libpdf.ts';
+import { createPdfCanvas, parseFont } from '../src/pdf/writer.ts';
 
 const m = (y: number, month1to12: number) => toMonth(y, month1to12 - 1);
+const font = (w: string) => new Uint8Array(readFileSync(new URL(`../src/assets/fonts/pdf/Inter-${w}.ttf`, import.meta.url)));
+const fonts = () => ({ regular: font('Regular'), semibold: font('SemiBold'), bold: font('Bold') });
+/** The text of a PDF as LibPDF (an independent reader) extracts it, whitespace flattened. */
+const extract = async (bytes: Uint8Array) => (await PDF.load(bytes)).extractText().map((p) => p.text).join(' ').replace(/\s+/g, ' ');
 
 function stay(extra: Partial<Stay> = {}): Stay {
   return {
@@ -93,16 +97,14 @@ describe('fonts', () => {
   });
 
   it.each(['Regular', 'SemiBold', 'Bold'])('the %s subset font has a glyph for every printable character', (weight) => {
-    const bytes = new Uint8Array(readFileSync(new URL(`../src/assets/fonts/pdf/Inter-${weight}.ttf`, import.meta.url)));
-    const font = PDF.create().embedFont(bytes);
-    expect(font.getUnencodableCharacters(PRINTABLE_TEXT)).toEqual([]);
+    const embedded = PDF.create().embedFont(font(weight));
+    expect(embedded.getUnencodableCharacters(PRINTABLE_TEXT)).toEqual([]);
   });
 
   it('a real PDF from the subset fonts extracts exactly, ₹ included', async () => {
-    const font = (w: string) => new Uint8Array(readFileSync(new URL(`../src/assets/fonts/pdf/Inter-${w}.ttf`, import.meta.url)));
-    const canvas = createLibPdfCanvas({ regular: font('Regular'), semibold: font('SemiBold'), bold: font('Bold') });
+    const canvas = createPdfCanvas(fonts());
     const bytes = await renderReceipts(canvas, buildReceipts('Priya Raghavan', [stay({ till: m(2026, 5) })]));
-    const text = (await PDF.load(bytes)).extractText().map((p) => p.text).join(' ').replace(/\s+/g, ' ');
+    const text = await extract(bytes);
     expect(text).toContain('₹28,000 (Rupees Twenty Eight Thousand only)');
     expect(text).toContain('1 April 2026 to 30 April 2026');
     expect(text).toContain('Date: 1 May 2026');
@@ -113,12 +115,104 @@ describe('fonts', () => {
   });
 
   it('the file itself carries no web address or credit either (document properties)', async () => {
-    const font = (w: string) => new Uint8Array(readFileSync(new URL(`../src/assets/fonts/pdf/Inter-${w}.ttf`, import.meta.url)));
-    const canvas = createLibPdfCanvas({ regular: font('Regular'), semibold: font('SemiBold'), bold: font('Bold') });
+    const canvas = createPdfCanvas(fonts());
     const bytes = await renderReceipts(canvas, buildReceipts('Priya Raghavan', [stay({ till: m(2026, 4) })]));
     const pdf = await PDF.load(bytes);
     const props = [pdf.getTitle(), pdf.getCreator(), pdf.getProducer()].join(' ').toLowerCase();
     expect(props).not.toMatch(/ajith|\.xyz|https?:|www\./);
     expect(Buffer.from(bytes).toString('latin1').toLowerCase()).not.toMatch(/ajith|\.xyz/);
+  });
+});
+
+describe('PDF writer (src/pdf/writer.ts), checked by an independent reader', () => {
+  it.each(['Regular', 'SemiBold', 'Bold'])('reads a glyph for every printable character from the %s cmap', (weight) => {
+    const parsed = parseFont(font(weight));
+    expect(Array.from(PRINTABLE_TEXT).filter((ch) => !parsed.glyph.get(ch.codePointAt(0)!))).toEqual([]);
+  });
+
+  it('measures text as LibPDF does: each glyph, and each line of a receipt (line breaks depend on it)', () => {
+    const ours = createPdfCanvas(fonts());
+    const theirs = PDF.create();
+    const texts = buildReceipts('José Ñúñez D’Souza', [stay({ frequency: 'quarterly' })]).flatMap(receiptText);
+    for (const [key, file] of [['regular', 'Regular'], ['semibold', 'SemiBold'], ['bold', 'Bold']] as const) {
+      const ref = theirs.embedFont(font(file));
+      // LibPDF rounds each glyph slightly differently; under 0.01 pt a glyph, so it only adds up over hundreds of them.
+      for (const ch of PRINTABLE_TEXT) expect(Math.abs(ours.width(ch, key, 12) - ref.widthOfTextAtSize(ch, 12)), `${key}: ${ch}`).toBeLessThan(0.01);
+      for (const t of texts) expect(Math.abs(ours.width(t, key, 12) - ref.widthOfTextAtSize(t, 12)), `${key}: ${t}`).toBeLessThan(0.2);
+    }
+  });
+
+  it('every printable character round-trips through the PDF text, in every weight', async () => {
+    const c = createPdfCanvas(fonts());
+    const chunks = PRINTABLE_TEXT.replace(/\s/g, '').match(/.{1,40}/gu)!;
+    chunks.forEach((chunk, i) => {
+      c.text(chunk, 40, 60 + i * 20, 'regular', 10, [0, 0, 0]);
+      c.text(chunk, 240, 60 + i * 20, 'semibold', 10, [0, 0, 0]);
+      c.text(chunk, 440, 60 + i * 20, 'bold', 10, [0, 0, 0]);
+    });
+    const text = await extract(await c.save());
+    for (const chunk of chunks) expect(text.split(chunk).length - 1, chunk).toBe(3);
+  });
+
+  it('pages, page size and title', async () => {
+    const receipts = buildReceipts('Priya', [stay({ till: m(2026, 8) })]); // 5 receipts: 3 pages
+    const bytes = await renderReceipts(createPdfCanvas(fonts()), receipts);
+    const pdf = await PDF.load(bytes);
+    expect(pdf.getPageCount()).toBe(3);
+    expect(pdf.getTitle()).toBe('Rent receipts');
+    const half = await createPdfCanvas(fonts(), { width: 595.28, height: 420.945 }).save();
+    expect(Buffer.from(half).toString('latin1')).toContain('/MediaBox [0 0 595.28 420.945]');
+  });
+
+  it('is structurally exact: xref offsets, startxref and stream lengths (lenient viewers would hide mistakes; Acrobat would not)', async () => {
+    const bytes = await renderReceipts(createPdfCanvas(fonts()), buildReceipts('José Ñúñez D’Souza', [stay({ till: m(2026, 8) })])); // 3 pages
+    const raw = Buffer.from(bytes).toString('latin1'); // one char per byte, so string offsets are byte offsets
+    const startxref = Number(raw.match(/startxref\n(\d+)\n%%EOF\n$/)![1]);
+    expect(raw.startsWith('xref\n', startxref)).toBe(true);
+    const [, first, count] = raw.slice(startxref).match(/^xref\n(\d+) (\d+)\n/)!;
+    expect(first).toBe('0');
+    const entriesAt = startxref + `xref\n0 ${count}\n`.length;
+    const size = Number(raw.match(/trailer\n<< \/Size (\d+)/)![1]);
+    expect(Number(count)).toBe(size);
+    for (let n = 0; n < size; n++) {
+      const entry = raw.slice(entriesAt + n * 20, entriesAt + (n + 1) * 20);
+      expect(entry, `xref entry ${n}`).toMatch(n === 0 ? /^0000000000 65535 f \n$/ : /^\d{10} 00000 n \n$/);
+      if (n > 0) expect(raw.startsWith(`${n} 0 obj\n`, Number(entry.slice(0, 10))), `object ${n} offset`).toBe(true);
+    }
+    const streams = [...raw.matchAll(/\/Length (\d+) >>\nstream\n/g)];
+    expect(streams.length).toBeGreaterThan(6); // 3 fonts + 3 ToUnicode maps + a content stream per page
+    for (const s of streams) {
+      const start = s.index! + s[0].length;
+      expect(raw.startsWith('\nendstream', start + Number(s[1])), `stream at ${s.index}`).toBe(true);
+    }
+  });
+
+  it('names fonts as tagged subsets, marks them symbolic, and gives a missing glyph the width the layout measured', async () => {
+    const c = createPdfCanvas(fonts());
+    c.text('Rāmदेव', 40, 60, 'regular', 10, [0, 0, 0]); // Devanagari isn't in the font: drawn as glyph 0
+    const raw = Buffer.from(await c.save()).toString('latin1');
+    for (const name of ['Regular', 'SemiBold', 'Bold']) expect(raw).toMatch(new RegExp(`/FontName /[A-Z]{6}\\+Inter-${name} `));
+    expect(raw.match(/\/Flags (\d+)/g)).toEqual(['/Flags 4', '/Flags 4', '/Flags 4']);
+    const regular = parseFont(font('Regular'));
+    const dw = Number(raw.match(/\/DW ([\d.]+)/)![1]);
+    expect(dw).toBeCloseTo((regular.advance(0) * 1000) / regular.unitsPerEm, 2);
+    expect(dw).toBeGreaterThan(0);
+  });
+
+  it('has a fresh file ID, a creation date, and a Unicode-safe title', async () => {
+    const save = () => createPdfCanvas(fonts(), undefined, 'Rent receipts – 2026').save();
+    const [a, b] = [Buffer.from(await save()).toString('latin1'), Buffer.from(await save()).toString('latin1')];
+    const id = (raw: string) => raw.match(/\/ID \[<([0-9a-f]{32})> <\1>\]/)?.[1];
+    expect(id(a)).toBeTruthy();
+    expect(id(a)).not.toBe(id(b));
+    expect(a).toMatch(/\/CreationDate \(D:\d{14}Z\)/);
+    expect((await PDF.load(new Uint8Array(Buffer.from(a, 'latin1')))).getTitle()).toBe('Rent receipts – 2026');
+  });
+
+  it('needs no browser APIs beyond TextEncoder (no compression streams), and stays small', async () => {
+    const bytes = await renderReceipts(createPdfCanvas(fonts()), buildReceipts('Priya Raghavan', [stay()])); // 12 receipts
+    expect(Buffer.from(bytes).toString('latin1')).not.toContain('/Filter');
+    expect(bytes.length).toBeLessThan(160 * 1024); // LibPDF made 157 KB of the same
+    expect(await extract(bytes)).toContain('Received from Priya Raghavan the sum of ₹28,000');
   });
 });

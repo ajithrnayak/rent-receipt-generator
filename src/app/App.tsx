@@ -13,7 +13,7 @@ type Generated =
   | { status: 'error'; key: string; message: string };
 
 // Starts downloading the PDF code once someone types into the form (not on page load, which
-// focuses the first blank), so Generate feels instant without costing every visitor 300 KB.
+// focuses the first blank), so Generate feels instant without costing every visitor the PDF code (about 50 KB gzip).
 let warmed = false;
 function warmPdf() {
   if (warmed) return;

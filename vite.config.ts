@@ -80,8 +80,8 @@ export default defineConfig({
     // Never turn an asset into a data: URL: the CSP allows fonts and images from this site only.
     // (The PDF fonts use ?inline on purpose: they become bytes in the script, not a URL, so no fetch is needed.)
     assetsInlineLimit: 0,
-    // The PDF chunk (LibPDF and its fonts) is about 1,070 kB; warn if it grows.
-    chunkSizeWarningLimit: 1150,
+    // The PDF chunk (our writer and the three fonts) is about 95 kB; warn if it grows much.
+    chunkSizeWarningLimit: 150,
   },
   test: {
     include: ['test/**/*.test.ts'],

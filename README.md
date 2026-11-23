@@ -20,7 +20,7 @@ Fill in the blanks on the receipt itself and get one PDF with a receipt for ever
 
 ## Nothing you type leaves your browser
 
-There is no server and no account. The page is static files, and the PDF is drawn on your device with [LibPDF](https://github.com/LibPDF-js/core).
+There is no server and no account. The page is static files, and the PDF is drawn on your device by a small PDF writer in this repo, with no third-party code involved (`src/pdf/writer.ts`).
 
 The code never sends anything, and the browser backs that up. The site sends a Content-Security-Policy that blocks fetch, XHR, WebSockets and beacons (`connect-src 'none'`), forbids form submissions, and lets scripts, styles, fonts and images come only from the site itself. So the page has no way to upload your name, address or your owner's PAN. (A policy like this can't close every channel; leaving the page or WebRTC fall outside it. That's why the code is small and open for you to read.)
 
@@ -39,6 +39,8 @@ The guidance in the tool comes from the Indian Stamp Act, 1899 (Schedule I, Arti
 ## Develop
 
 Node 22.18 or later. Vite, TypeScript and Preact; Vitest and Playwright for tests.
+
+Before changing anything, read [AGENTS.md](AGENTS.md): the privacy rules the code must keep, where else to update when you change something, and how to test. Coding agents read it automatically. More in [docs/](docs/): [architecture](docs/architecture.md), [gotchas](docs/gotchas.md), [decisions](docs/decisions.md), [receipt rules](docs/rules.md) and [testing](docs/testing.md).
 
 | Command | Does |
 |---|---|
@@ -60,10 +62,12 @@ Node 22.18 or later. Vite, TypeScript and Preact; Vitest and Playwright for test
 | `index.html` | Static page: headline, intro, the Why use this? / How it works / Sample receipt dialogs, footer, structured data |
 | `src/app/` | The form (Preact), mounted into `#tool` |
 | `src/lib/` | Months and dates, money and words, receipts and checks, receipt wording, printable characters |
-| `src/pdf/` | PDF layout behind a small canvas interface, drawn with LibPDF; loaded only once you start typing |
+| `src/pdf/` | PDF layout behind a small canvas interface, drawn by our own PDF writer; loaded only once you start typing |
 | `fonts/source/` | Inter 4.1 and Caveat (SIL OFL); `src/assets/fonts/web/` (page) and `src/assets/fonts/pdf/` (PDF) are generated subsets; the licences are published from `public/fonts/` |
 | `public/_headers` | Security headers for Cloudflare static assets |
-| `spike/` | The PDF library comparison (LibPDF, jsPDF, pdf-lib) that chose LibPDF |
+| `AGENTS.md` | How to work on the code: privacy rules, commands, change recipes (`CLAUDE.md` imports it) |
+| `docs/` | Architecture, gotchas, design decisions, the receipt and tax rules, and testing |
+| `spike/` | The first PDF library comparison (LibPDF, jsPDF, pdf-lib); superseded by the benchmark in `docs/decisions.md` |
 | `test/` | Unit tests; `test/e2e/` browser and accessibility tests |
 | `wrangler.jsonc` | Cloudflare static-assets Worker on `rent-receipt-generator.ajith.xyz` |
 

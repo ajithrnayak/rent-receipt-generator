@@ -13,6 +13,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('accessibility: empty, filled, errors, results and dialog', async ({ page }) => {
+  // Six full axe scans: a few seconds alone, but past 30 s in Firefox when every project runs in parallel.
+  test.slow();
   await page.goto('/');
   await scan(page, 'empty page');
 
