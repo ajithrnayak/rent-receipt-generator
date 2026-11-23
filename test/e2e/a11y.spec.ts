@@ -19,19 +19,23 @@ test('accessibility: empty, filled, errors, results and dialog', async ({ page }
   await page.getByRole('button', { name: /^Generate/ }).click();
   await scan(page, 'missing blanks highlighted');
 
-  await page.getByLabel('Your name').fill('Priya Raghavan');
-  await page.getByLabel('Monthly rent in rupees').fill('28000');
-  await page.getByLabel('House address').fill('14, 2nd Cross, Indiranagar, Bengaluru 560038');
-  await page.getByLabel('House owner’s full name').fill('K. S. Venkatesh');
-  await page.getByLabel('Add a signature line and revenue-stamp box').check();
+  // Fields are found by role and accessible name here, not getByLabel: after an axe scan,
+  // getByLabel crashes Playwright's Firefox on this page (it trips over the stay section's
+  // aria-labelledby). getByRole checks the same names, and is what assistive tech sees anyway.
+  const field = (scope: Page | ReturnType<Page['locator']>, name: string) => scope.getByRole('textbox', { name, exact: true });
+  await field(page, 'Your name').fill('Priya Raghavan');
+  await field(page, 'Monthly rent in rupees').fill('28000');
+  await field(page, 'House address').fill('14, 2nd Cross, Indiranagar, Bengaluru 560038');
+  await field(page, 'House owner’s full name').fill('K. S. Venkatesh');
+  await page.getByRole('checkbox', { name: 'Add a signature line and revenue-stamp box' }).check();
   await page.getByRole('radio', { name: 'Cash' }).check();
   await page.getByRole('button', { name: '+ Add another stay' }).click();
   await scan(page, 'two stays with notes');
 
   const second = page.locator('section.stay').nth(1);
-  await second.getByLabel('Monthly rent in rupees').fill('30000');
-  await second.getByLabel('House address').fill('22 Lake View Road, Koramangala, Bengaluru 560034');
-  await second.getByLabel('House owner’s full name').fill('R. Shankar');
+  await field(second, 'Monthly rent in rupees').fill('30000');
+  await field(second, 'House address').fill('22 Lake View Road, Koramangala, Bengaluru 560034');
+  await field(second, 'House owner’s full name').fill('R. Shankar');
   await page.getByRole('button', { name: /^Generate/ }).click();
   await expect(page.getByRole('heading', { name: /ready as one PDF/ })).toBeVisible();
   await page.waitForTimeout(1200); // let the slide-in finish so colours are final
