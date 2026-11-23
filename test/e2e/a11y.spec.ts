@@ -24,7 +24,7 @@ test('accessibility: empty, filled, errors, results and dialog', async ({ page }
   await page.getByLabel('House address').fill('14, 2nd Cross, Indiranagar, Bengaluru 560038');
   await page.getByLabel('House owner’s full name').fill('K. S. Venkatesh');
   await page.getByLabel('Add a signature line and revenue-stamp box').check();
-  await page.getByRole('button', { name: 'Cash' }).click();
+  await page.getByRole('radio', { name: 'Cash' }).check();
   await page.getByRole('button', { name: '+ Add another stay' }).click();
   await scan(page, 'two stays with notes');
 

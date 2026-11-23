@@ -1,12 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Ref } from 'preact';
 import { amountInWords, formatINR } from '../lib/money.ts';
-import { MONTH_NAMES, fyLabel, monthIndexOf, receiptDateOf, shortLabel, spanTitle, toMonth, yearOf, type Month } from '../lib/months.ts';
-import {
-  PAN_PATTERN, PAN_THRESHOLD, STAMP_THRESHOLD, cleanPan, cleanRent, firstOverlap, futureMonths,
-  panNeeded, periodsOf, type Frequency, type PayMode, type Stay,
-} from '../lib/receipts.ts';
-import { unprintable } from '../lib/charset.ts';
+import { MONTH_NAMES, monthIndexOf, shortLabel, toMonth, yearOf, type Month } from '../lib/months.ts';
+import { largestReceipt, notesFor, problemOf, stampAdvice } from '../lib/notes.ts';
+import { cleanPan, cleanRent, firstOverlap, panNeeded, periodsOf, type Frequency, type PayMode, type Stay } from '../lib/receipts.ts';
+import { FIXED, MODE_LABEL } from '../lib/wording.ts';
 import type { Action, Today } from './state.ts';
 
 interface Props {
@@ -19,28 +17,15 @@ interface Props {
   years: number[];
   totals: Map<Month, number>;
   dispatch: (a: Action) => void;
+  onRemove: () => void;
   tenantRef?: Ref<HTMLInputElement>;
   /** The page-wide PAN note shows on one stay only: the first that needs it. */
   showPanNote: boolean;
 }
 
-type Note = { text: string; kind: 'warn' | 'info' };
+const MODES = Object.entries(MODE_LABEL) as [PayMode, string][];
 
-const MODES: [PayMode, string][] = [
-  ['bank', 'Bank transfer / UPI'],
-  ['cheque', 'Cheque'],
-  ['cash', 'Cash'],
-];
-
-function stampAdvice(mode: PayMode | null, largest: number): string {
-  if (!mode) return 'Pick one; it prints on the receipts.';
-  if (largest > 0 && largest <= STAMP_THRESHOLD) return 'Receipts of ₹5,000 or less don’t need a revenue stamp. The owner’s signature still helps if your employer asks.';
-  if (mode === 'cash') return 'Cash rent over ₹5,000: put a ₹1 revenue stamp on each receipt and have the owner sign across it.';
-  const how = mode === 'cheque' ? 'cheque' : 'bank transfer or UPI';
-  return `Paid by ${how}: the Stamp Act still asks for a ₹1 stamp on receipts over ₹5,000, but many employers accept your bank statement instead. Check with yours.`;
-}
-
-/** Width in characters for a blank that grows with what's typed. */
+/** Width in characters for a blank that grows with what's typed (CSS caps it at the line's width). */
 function grow(value: string, placeholder: string): number {
   return Math.max(placeholder.length, value.length) + 1;
 }
@@ -119,62 +104,35 @@ function MonthPick({ id, label, value, years, onPick }: { id: string; label: str
   );
 }
 
-export function StayCard({ stay, index, stays, tenant, tried, today, years, totals, dispatch, tenantRef, showPanNote }: Props) {
+export function StayCard({ stay, index, stays, tenant, tried, today, years, totals, dispatch, onRemove, tenantRef, showPanNote }: Props) {
   const id = stay.id;
   const set = (patch: Partial<Omit<Stay, 'id'>>) => dispatch({ type: 'stay', id, patch });
   const multi = stays.length > 1;
   const label = multi ? `Stay ${index + 1}` : 'Rent receipt';
 
-  const periods = periodsOf(stay);
+  const count = periodsOf(stay).length;
   const overlap = firstOverlap(stays, index);
   const pan = panNeeded(stays, stay, totals);
-  const largest = stay.rent ? Math.max(0, ...periods.map((p) => (p.till - p.from + 1) * stay.rent!)) : 0;
+  const notes = notesFor({ stays, index, tenant, tried, now: today.now, totals, showPanNote });
 
-  const notes: Note[] = [];
-  if (stay.till < stay.from) {
-    notes.push({ kind: 'warn', text: 'The end month is before the start month, so this stay has no receipts yet.' });
-  } else {
-    if (overlap) notes.push({ kind: 'warn', text: `${shortLabel(overlap.month)} also appears in Stay ${overlap.other + 1}. That’s fine if you paid two rents that month; otherwise adjust the months.` });
-    const future = futureMonths(stay, today.now);
-    if (future.length) {
-      const first = shortLabel(future[0]!);
-      const span = future.length > 1 ? `${first} – ${shortLabel(future[future.length - 1]!)} haven’t` : `${first} hasn’t`;
-      notes.push({ kind: 'warn', text: `${span} happened yet. Receipts are for rent you’ve already paid, so you may want to end at ${shortLabel(today.now)}.` });
-    } else {
-      // The receipt covering this month is dated after today (the 1st of next month).
-      const current = periods.find((p) => p.from <= today.now && today.now <= p.till);
-      if (current) {
-        const which = current.from === current.till ? `${MONTH_NAMES[monthIndexOf(current.from)]}’s receipt` : `The ${spanTitle(current.from, current.till)} receipt`;
-        notes.push({ kind: 'warn', text: `${which} will be dated ${receiptDateOf(current.till)}. Make it once you’ve paid, or end this stay at ${shortLabel(current.from - 1)}.` });
-      }
-    }
-  }
-  if (showPanNote) {
-    const where = multi ? 'Rent across your stays' : 'Rent';
-    notes.push({ kind: 'info', text: `${where} comes to ₹${formatINR(pan.total)} in the ${fyLabel(pan.fy!)} financial year, above ₹${formatINR(PAN_THRESHOLD)}, so your employer will ask for the owner’s PAN${multi ? ' on every stay marked “Needed”' : ''}. Owner has no PAN? Ask your employer what they accept instead.` });
-  }
-  if (stay.pan && !PAN_PATTERN.test(stay.pan) && (stay.pan.length === 10 || tried)) {
-    notes.push({ kind: 'warn', text: 'That PAN doesn’t look right: it’s 5 letters, 4 digits, then a letter.' });
-  }
-  const odd = unprintable([index === 0 ? tenant : '', stay.address, stay.owner].join(''));
-  if (odd.length) {
-    notes.push({ kind: 'warn', text: `The PDF can only print English letters for now, so ${odd.slice(0, 5).map((c) => `“${c}”`).join(' ')} won’t show. Please type names and the address in English.` });
-  }
-
-  const count = periods.length;
   const rangeLabel = stay.till >= stay.from ? `${shortLabel(stay.from)} – ${shortLabel(stay.till)}` : '—';
-  const missTenant = tried && !tenant.trim();
+  // A blank is highlighted after Generate if it is empty or holds letters the PDF can't print.
+  const missTenant = tried && problemOf(tenant) !== null;
+  const missAddress = tried && problemOf(stay.address) !== null;
+  const missOwner = tried && problemOf(stay.owner) !== null;
+  const showSignHint = !(stay.sign && stay.mode);
 
   return (
     <section class={`stay${overlap ? ' overlap' : ''}`} aria-labelledby={`stay-${id}-title`}>
       <div class="paper">
         <div class="paper-head">
           <div class="paper-title">
-            <h2 class="kicker" id={`stay-${id}-title`}>Rent receipt{multi && <span class="sr-only">, {label}</span>}</h2>
+            {/* Focusable from script only, so removing a stay can move focus here. */}
+            <h2 class="kicker" id={`stay-${id}-title`} tabIndex={-1}>Rent receipt{multi && <span class="sr-only">, {label}</span>}</h2>
             {multi && <span class="paper-stay" aria-hidden="true">{label}</span>}
           </div>
           {multi && (
-            <button type="button" class="link-btn" onClick={() => dispatch({ type: 'remove', id })}>
+            <button type="button" class="link-btn" onClick={onRemove}>
               Remove stay<span class="sr-only"> {index + 1}</span>
             </button>
           )}
@@ -213,7 +171,7 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
 
         <div>
           <label class="sr-only" for={`addr-${id}`}>House address</label>
-          <AddressBlank id={`addr-${id}`} value={stay.address} miss={tried && !stay.address.trim()} onValue={(address) => set({ address })} />
+          <AddressBlank id={`addr-${id}`} value={stay.address} miss={missAddress} onValue={(address) => set({ address })} />
         </div>
 
         <p>
@@ -243,24 +201,24 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
           <label class="sr-only" for={`owner-${id}`}>House owner’s full name</label>
           <input
             id={`owner-${id}`}
-            class={`blank${tried && !stay.owner.trim() ? ' miss' : ''}`}
+            class={`blank${missOwner ? ' miss' : ''}`}
             type="text"
             placeholder="Owner’s full name"
             size={grow(stay.owner, 'Owner’s full name')}
             autoComplete="off"
             enterKeyHint="next"
-            aria-invalid={(tried && !stay.owner.trim()) || undefined}
+            aria-invalid={missOwner || undefined}
             value={stay.owner}
             onInput={(e) => set({ owner: e.currentTarget.value })}
           />
           <span class="punct">,</span> PAN{' '}
           <label class="sr-only" for={`pan-${id}`}>{pan.needed ? 'Owner’s PAN, needed because yearly rent is over 1 lakh' : 'Owner’s PAN, optional'}</label>
+          {/* No maxLength: it would cut a pasted "ABCPV 1234 K" before cleanPan drops the spaces. cleanPan caps it at 10. */}
           <input
             id={`pan-${id}`}
             class="blank blank-pan"
             type="text"
             placeholder={pan.needed ? 'Needed' : 'Optional'}
-            maxLength={10}
             autoComplete="off"
             autoCapitalize="characters"
             spellcheck={false}
@@ -280,36 +238,45 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
           <div class="sign-boxes" aria-hidden="true">
             <div class="sign-line">
               <div />
-              <span class="sign-caption">Owner’s signature</span>
+              <span class="sign-caption">{FIXED.signature}</span>
             </div>
             <div class="sign-stamp">
-              <div>₹1 stamp</div>
-              <span class="sign-caption">Revenue stamp</span>
+              <div>{FIXED.stamp}</div>
+              <span class="sign-caption">{FIXED.stampCaption}</span>
             </div>
           </div>
         )}
       </div>
 
       <div class="strip">
-        <label class="check">
-          <input type="checkbox" checked={stay.sign} onChange={(e) => set({ sign: e.currentTarget.checked })} />
-          <span class="check-text">
+        <div class="check">
+          <label class="check-label">
+            <input
+              id={`sign-${id}`}
+              type="checkbox"
+              checked={stay.sign}
+              aria-describedby={showSignHint ? `sign-${id}-hint` : undefined}
+              onChange={(e) => set({ sign: e.currentTarget.checked })}
+            />
             <span>Add a signature line and revenue-stamp box</span>
-            {!(stay.sign && stay.mode) && (
-              <span class="hint">Receipts over ₹5,000 legally carry a ₹1 revenue stamp, signed across by the owner. Paid online? Many employers accept your bank statement instead; check with yours.</span>
-            )}
-          </span>
-        </label>
+          </label>
+          {showSignHint && (
+            <span class="hint check-hint" id={`sign-${id}-hint`}>Receipts over ₹5,000 legally carry a ₹1 revenue stamp, signed across by the owner. Paid online? Many employers accept your bank statement instead; check with yours.</span>
+          )}
+        </div>
 
         {stay.sign && (
           <div class="mode">
-            <div class="chips" role="group" aria-labelledby={`mode-${id}`}>
+            <div class="chips" role="radiogroup" aria-labelledby={`mode-${id}`}>
               <span id={`mode-${id}`} class="chips-label">Paid by</span>
               {MODES.map(([mode, text]) => (
-                <button type="button" class="chip" aria-pressed={stay.mode === mode} onClick={() => set({ mode })}>{text}</button>
+                <label class="chip">
+                  <input type="radio" name={`mode-${id}`} value={mode} checked={stay.mode === mode} onChange={() => set({ mode })} />
+                  {text}
+                </label>
               ))}
             </div>
-            <p class="hint" aria-live="polite">{stampAdvice(stay.mode, largest)}</p>
+            <p class="hint" aria-live="polite">{stampAdvice(stay.mode, largestReceipt(stay))}</p>
           </div>
         )}
 

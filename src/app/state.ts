@@ -31,10 +31,19 @@ export type Action =
   | { type: 'remove'; id: number }
   | { type: 'tried' };
 
-export function initialState(t: Today): State {
+/** What someone typed into the pre-rendered form before the script took over (see seed.ts). */
+export interface Seed {
+  tenant?: string;
+  /** Changes to the first stay, the only one the pre-rendered page has. */
+  stay?: Partial<Omit<Stay, 'id'>>;
+  /** The id of the field that had the cursor. */
+  focus?: string;
+}
+
+export function initialState(t: Today, seed: Seed = {}): State {
   return {
-    tenant: '',
-    stays: [blankStay(1, t.fy, t.fyToDate, 'monthly', false, null)],
+    tenant: seed.tenant ?? '',
+    stays: [{ ...blankStay(1, t.fy, t.fyToDate, 'monthly', false, null), ...seed.stay }],
     nextId: 2,
     tried: false,
   };

@@ -20,7 +20,7 @@ export const FIXED = {
   kicker: 'RENT RECEIPT',
   stamp: '₹1 stamp',
   stampCaption: 'Revenue stamp',
-  signature: "Owner's signature",
+  signature: 'Owner’s signature',
 } as const;
 
 export interface Wording {
@@ -35,7 +35,7 @@ export interface Wording {
 export function wordingOf(r: Receipt): Wording {
   const p = spanOf(r.from, r.till);
   const rows: [string, string][] = [['Received by', r.owner]];
-  if (r.pan) rows.push(["Owner's PAN", r.pan]);
+  if (r.pan) rows.push(['Owner’s PAN', r.pan]);
   if (r.sign && r.mode) rows.push(['Mode of payment', MODE_LABEL[r.mode]]);
   return {
     no: `No. ${r.no}`,

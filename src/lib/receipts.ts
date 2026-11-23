@@ -81,11 +81,6 @@ export function buildReceipts(tenant: string, stays: Stay[]): Receipt[] {
   return all.sort((a, b) => a.from - b.from || a.till - b.till).map((r, i) => ({ ...r, no: i + 1 }));
 }
 
-/** Receipts a stay will produce (for the count shown on its card). */
-export function receiptCount(stay: Stay): number {
-  return periodsOf(stay).length;
-}
-
 /** First month this stay shares with an earlier or later stay, with that stay's position (0-based). */
 export function firstOverlap(stays: Stay[], index: number): { month: Month; other: number } | null {
   const me = stays[index];

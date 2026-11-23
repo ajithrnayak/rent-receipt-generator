@@ -2,18 +2,20 @@
 import { defineConfig, type Plugin } from 'vite';
 
 /**
- * The privacy guarantee, enforced by the browser: scripts, styles and fonts only
- * from this site, and no network connections at all (connect-src 'none'), so even
- * a bug could not send what you type anywhere. Production sends the same policy as
- * a header (public/_headers); the meta copy makes `vite preview` and the browser
- * tests run under it too. (frame-ancestors only works as a header.)
+ * The privacy guarantee, enforced by the browser: scripts, styles, fonts and images
+ * only from this site, and no fetch, XHR, WebSocket or beacon at all (connect-src
+ * 'none'), so the page has no way to upload what you type. (CSP does not govern
+ * every channel: a page could still navigate away with data in the URL, and WebRTC
+ * is outside it. That is why the code itself never does either.) Production sends
+ * the same policy as a header (public/_headers); the meta copy makes `vite preview`
+ * and the browser tests run under it too. (frame-ancestors only works as a header.)
  */
 export const CSP = [
   "default-src 'none'",
   "script-src 'self'",
   "style-src 'self'",
   "font-src 'self'",
-  "img-src 'self' data:",
+  "img-src 'self'",
   "connect-src 'none'",
   "form-action 'none'",
   "base-uri 'none'",
@@ -33,7 +35,9 @@ const JSX = { runtime: 'automatic', importSource: 'preact' } as const;
 /**
  * Renders the form's starting state into index.html at build time, so crawlers and
  * the first paint see the receipt without waiting for JavaScript (and nothing jumps
- * when it mounts). In the browser, main.tsx replaces it with the live form.
+ * when it mounts). In the browser, main.tsx replaces it with the live form, keeping
+ * anything typed into it first (src/app/seed.ts). It goes after the <noscript> note,
+ * so with JavaScript off the note is the first thing in the tool.
  */
 function prerenderForm(): Plugin {
   return {
@@ -53,8 +57,10 @@ function prerenderForm(): Plugin {
       try {
         const { App } = await server.ssrLoadModule('/src/app/App.tsx');
         const markup = renderToString(h(App, null));
-        if (!html.includes('<main id="tool">')) throw new Error('prerender-form: <main id="tool"> not found');
-        return html.replace('<main id="tool">', `<main id="tool">${markup}`);
+        const slot = /<main id="tool">[\s\S]*?<\/noscript>/;
+        if (!slot.test(html)) throw new Error('prerender-form: <main id="tool"> with its <noscript> note not found');
+        // A function, so "$" in the markup is never read as a replacement pattern.
+        return html.replace(slot, (start) => `${start}${markup}`);
       } finally {
         await server.close();
       }
@@ -71,8 +77,11 @@ export default defineConfig({
     target: 'es2022',
     // The polyfill would fetch() modules, which connect-src 'none' forbids; every target browser supports modulepreload.
     modulePreload: { polyfill: false },
-    // Fonts for the PDF are imported with ?inline on purpose (no fetch needed).
-    chunkSizeWarningLimit: 1500,
+    // Never turn an asset into a data: URL: the CSP allows fonts and images from this site only.
+    // (The PDF fonts use ?inline on purpose: they become bytes in the script, not a URL, so no fetch is needed.)
+    assetsInlineLimit: 0,
+    // The PDF chunk (LibPDF and its fonts) is about 1,070 kB; warn if it grows.
+    chunkSizeWarningLimit: 1150,
   },
   test: {
     include: ['test/**/*.test.ts'],

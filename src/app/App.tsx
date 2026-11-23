@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
 import { shortLabel, yearOf } from '../lib/months.ts';
+import { problemOf } from '../lib/notes.ts';
 import { buildReceipts, panNeeded, periodsOf, rentByFinancialYear, type Receipt } from '../lib/receipts.ts';
-import { initialState, reducer, today as getToday } from './state.ts';
+import { initialState, reducer, today as getToday, type Seed } from './state.ts';
 import { StayCard } from './StayCard.tsx';
 import { Results } from './Results.tsx';
 
@@ -29,20 +30,45 @@ function fileName(receipts: Receipt[]): string {
   return `rent-receipts-${slug(first.from)}-to-${slug(last.till)}.pdf`;
 }
 
-export function App() {
-  const today = useMemo(() => getToday(), []);
-  const [state, dispatch] = useReducer(reducer(today), today, initialState);
+export function App({ seed }: { seed?: Seed }) {
+  const [today, setToday] = useState(getToday);
+  const [state, dispatch] = useReducer(reducer(today), today, (t) => initialState(t, seed));
   const [gen, setGen] = useState<Generated>({ status: 'idle' });
   const [attempt, setAttempt] = useState(0);
   const tenantRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // The cursor starts on the first blank, without scrolling: on phones the headline must stay in view.
-  useEffect(() => tenantRef.current?.focus({ preventScroll: true }), []);
+  // If someone was already typing into the pre-rendered form, it goes back where they were.
+  useEffect(() => {
+    const el = (seed?.focus && document.getElementById(seed.focus)) || tenantRef.current;
+    el?.focus({ preventScroll: true });
+    // Caret to the end, on text fields only (setSelectionRange throws on a checkbox).
+    if (seed?.focus && (el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && el.type === 'text'))) {
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, []);
+
+  // A tab left open into a new month moves "today" on when it is looked at again.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      setToday((t) => {
+        const next = getToday();
+        return next.now === t.now ? t : next;
+      });
+    };
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, []);
 
   const receipts = useMemo(() => buildReceipts(state.tenant, state.stays), [state.tenant, state.stays]);
   const totals = useMemo(() => rentByFinancialYear(state.stays), [state.stays]);
   const key = useMemo(() => JSON.stringify([state.tenant, state.stays]), [state.tenant, state.stays]);
+  // The form as it is now, for a PDF that finishes after an edit.
+  const keyRef = useRef(key);
+  keyRef.current = key;
+  const runRef = useRef(0);
 
   const years = useMemo(() => {
     const fyYear = yearOf(today.fy);
@@ -53,12 +79,18 @@ export function App() {
   }, [state.stays, today.fy]);
 
   const missing: string[] = [];
-  if (!state.tenant.trim()) missing.push('your name');
+  const notEnglish: string[] = [];
+  const check = (value: string, what: string) => {
+    const problem = problemOf(value);
+    if (problem === 'blank') missing.push(what);
+    if (problem === 'english') notEnglish.push(what);
+  };
+  check(state.tenant, 'your name');
   state.stays.forEach((s, i) => {
     const which = state.stays.length > 1 ? ` (stay ${i + 1})` : '';
     if (!s.rent) missing.push(`monthly rent${which}`);
-    if (!s.address.trim()) missing.push(`address${which}`);
-    if (!s.owner.trim()) missing.push(`owner’s name${which}`);
+    check(s.address, `address${which}`);
+    check(s.owner, `owner’s name${which}`);
   });
   const noReceipts = missing.length === 0 && receipts.length === 0;
 
@@ -75,28 +107,52 @@ export function App() {
     if (attempt) formRef.current?.querySelector<HTMLElement>('.miss')?.focus();
   }, [attempt]);
 
+  // After removing a stay, focus goes to the stay before it (or the new first one), not the page.
+  const removedAt = useRef<number | null>(null);
+  useEffect(() => {
+    if (removedAt.current === null) return;
+    const headings = formRef.current?.querySelectorAll<HTMLElement>('.stay h2');
+    headings?.[Math.max(0, removedAt.current - 1)]?.focus();
+    removedAt.current = null;
+  }, [state.stays.length]);
+
   async function generate(e: Event) {
     e.preventDefault();
     dispatch({ type: 'tried' });
-    if (missing.length || !receipts.length) {
+    if (missing.length || notEnglish.length || !receipts.length) {
       setAttempt((n) => n + 1);
       return;
     }
+    // Generating again without changes replaces the earlier PDF.
+    if (gen.status === 'ready') URL.revokeObjectURL(gen.url);
+    const run = ++runRef.current;
+    // Only the latest run, for the form as it still is, may show its result.
+    const current = () => run === runRef.current && keyRef.current === key;
     setGen({ status: 'working', key });
     try {
       const { makePdf } = await import('../pdf/generate.ts');
       const blob = await makePdf(receipts);
+      if (!current()) return;
       setGen({ status: 'ready', key, url: URL.createObjectURL(blob), filename: fileName(receipts), receipts });
     } catch (err) {
       console.error(err);
+      if (!current()) return;
       setGen({ status: 'error', key, message: 'Something went wrong while making the PDF. Please try again; if it keeps happening, try another browser.' });
     }
   }
 
-  // Enter moves to the next blank instead of submitting.
+  // Enter never submits from inside the form, only from the Generate button. (Not the Enter that confirms an IME composition.)
   function onKeyDown(e: KeyboardEvent) {
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
     const el = e.target as HTMLElement;
-    if (e.key !== 'Enter' || !el.classList.contains('blank')) return;
+    // On a pay-mode choice, Enter picks it; on the checkbox it does nothing (Space ticks it).
+    if (el instanceof HTMLInputElement && (el.type === 'radio' || el.type === 'checkbox')) {
+      e.preventDefault();
+      if (el.type === 'radio' && !el.checked) el.click();
+      return;
+    }
+    // On a blank, Enter moves to the next one.
+    if (!el.classList.contains('blank')) return;
     e.preventDefault();
     const blanks = Array.from(formRef.current?.querySelectorAll<HTMLElement>('.blank') ?? []);
     blanks[blanks.indexOf(el) + 1]?.focus();
@@ -124,6 +180,10 @@ export function App() {
             years={years}
             totals={totals}
             dispatch={dispatch}
+            onRemove={() => {
+              removedAt.current = index;
+              dispatch({ type: 'remove', id: stay.id });
+            }}
             tenantRef={index === 0 ? tenantRef : undefined}
             showPanNote={index === panNoteAt}
           />
@@ -135,6 +195,9 @@ export function App() {
 
         {state.tried && missing.length > 0 && (
           <p class="alert" role="alert">Almost there. Fill in the highlighted blanks: {missing.join(', ')}.</p>
+        )}
+        {state.tried && notEnglish.length > 0 && (
+          <p class="alert" role="alert">The PDF can only print English letters. Please retype in English: {notEnglish.join(', ')}.</p>
         )}
         {state.tried && noReceipts && (
           <p class="alert" role="alert">No months to make receipts for yet. Check the months in each stay.</p>

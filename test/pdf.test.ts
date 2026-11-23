@@ -108,4 +108,14 @@ describe('fonts', () => {
     expect(text).toContain('Date: 1 May 2026');
     expect(PRINTABLE_TEXT).toContain('₹');
   });
+
+  it('the file itself carries no web address or credit either (document properties)', async () => {
+    const font = (w: string) => new Uint8Array(readFileSync(new URL(`../src/assets/fonts/pdf/Inter-${w}.ttf`, import.meta.url)));
+    const canvas = createLibPdfCanvas({ regular: font('Regular'), semibold: font('SemiBold'), bold: font('Bold') });
+    const bytes = await renderReceipts(canvas, buildReceipts('Priya Raghavan', [stay({ till: m(2026, 4) })]));
+    const pdf = await PDF.load(bytes);
+    const props = [pdf.getTitle(), pdf.getCreator(), pdf.getProducer()].join(' ').toLowerCase();
+    expect(props).not.toMatch(/ajith|\.xyz|https?:|www\./);
+    expect(Buffer.from(bytes).toString('latin1').toLowerCase()).not.toMatch(/ajith|\.xyz/);
+  });
 });

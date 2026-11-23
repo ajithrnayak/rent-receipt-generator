@@ -22,7 +22,7 @@ Fill in the blanks on the receipt itself and get one PDF with a receipt for ever
 
 There is no server and no account. The page is static files, and the PDF is drawn on your device with [LibPDF](https://github.com/LibPDF-js/core).
 
-This isn't only a promise; the browser enforces it. The site sends a Content-Security-Policy that forbids every network connection (`connect-src 'none'`), and scripts, styles and fonts may only come from the site itself. Even a bug could not send your name, address or your owner's PAN anywhere.
+The code never sends anything, and the browser backs that up. The site sends a Content-Security-Policy that blocks fetch, XHR, WebSockets and beacons (`connect-src 'none'`), forbids form submissions, and lets scripts, styles, fonts and images come only from the site itself. So the page has no way to upload your name, address or your owner's PAN. (A policy like this can't close every channel; leaving the page or WebRTC fall outside it. That's why the code is small and open for you to read.)
 
 You can check it yourself:
 
@@ -44,7 +44,7 @@ Node 22.18 or later. Vite, TypeScript and Preact; Vitest and Playwright for test
 |---|---|
 | `npm install` | Install dependencies |
 | `npm run dev` | Dev server |
-| `npm run build` | Type-check and build static files into `dist/` |
+| `npm run build` | Type-check, run the unit tests, and build static files into `dist/` (so a failing test stops a deploy) |
 | `npm run preview` | Serve the build (with the CSP) |
 | `npm test` | Unit tests (Vitest): amount in words, dates, ordering, quarters, PAN totals, PDF layout, fonts, CSP |
 | `npm run test:e2e` | Browser tests (Playwright): Chrome, Firefox, WebKit, phone sizes, axe accessibility scans |
@@ -61,7 +61,7 @@ Node 22.18 or later. Vite, TypeScript and Preact; Vitest and Playwright for test
 | `src/app/` | The form (Preact), mounted into `#tool` |
 | `src/lib/` | Months and dates, money and words, receipts and checks, receipt wording, printable characters |
 | `src/pdf/` | PDF layout behind a small canvas interface, drawn with LibPDF; loaded only once you start typing |
-| `fonts/source/` | Inter 4.1 and Caveat (SIL OFL); `public/fonts/` and `src/assets/fonts/pdf/` are generated subsets |
+| `fonts/source/` | Inter 4.1 and Caveat (SIL OFL); `src/assets/fonts/web/` (page) and `src/assets/fonts/pdf/` (PDF) are generated subsets; the licences are published from `public/fonts/` |
 | `public/_headers` | Security headers for Cloudflare static assets |
 | `spike/` | The PDF library comparison (LibPDF, jsPDF, pdf-lib) that chose LibPDF |
 | `test/` | Unit tests; `test/e2e/` browser and accessibility tests |

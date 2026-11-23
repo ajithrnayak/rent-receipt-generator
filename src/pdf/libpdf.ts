@@ -5,8 +5,7 @@ import { A4, type Canvas, type FontBytes, type RGB } from './canvas.ts';
 export function createLibPdfCanvas(bytes: FontBytes): Canvas {
   const pdf = PDF.create();
   pdf.setTitle('Rent receipts');
-  pdf.setCreator('rent-receipt-generator.ajith.xyz');
-  pdf.setProducer('rent-receipt-generator.ajith.xyz');
+  // Creator and Producer stay at LibPDF's defaults: no web address in the file, as on the page.
   const fonts = {
     regular: pdf.embedFont(bytes.regular),
     semibold: pdf.embedFont(bytes.semibold),

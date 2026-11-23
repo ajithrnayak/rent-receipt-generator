@@ -1,6 +1,6 @@
 // Subsets Inter (fonts/source/) to the printable character set:
 // - TTF for the PDF  → src/assets/fonts/pdf/  (bundled into the PDF code)
-// - WOFF2 for the page → public/fonts/
+// - WOFF2 for the page → src/assets/fonts/web/ (Vite fingerprints them, so they cache for a year)
 // Run after changing src/lib/charset.ts: `npm run fonts`.
 import { readFileSync, writeFileSync } from 'node:fs';
 import subsetFont from 'subset-font';
@@ -25,9 +25,9 @@ for (const [weight, file] of Object.entries(pdf)) {
 
 const web = { 400: 'Inter-Regular.ttf', 500: 'Inter-Medium.ttf', 600: 'Inter-SemiBold.ttf', 700: 'Inter-Bold.ttf' };
 for (const [weight, file] of Object.entries(web)) {
-  out(`public/fonts/inter-${weight}.woff2`, await subsetFont(src(file), PRINTABLE_TEXT, { targetFormat: 'woff2' }));
+  out(`src/assets/fonts/web/inter-${weight}.woff2`, await subsetFont(src(file), PRINTABLE_TEXT, { targetFormat: 'woff2' }));
 }
 
 // Caveat (SIL OFL) for the handwritten headline only: just the characters it uses.
 const HEADLINE = 'No email. No phone number.';
-out('public/fonts/caveat-700.woff2', await subsetFont(src('Caveat-Bold-latin.woff2'), HEADLINE, { targetFormat: 'woff2' }));
+out('src/assets/fonts/web/caveat-700.woff2', await subsetFont(src('Caveat-Bold-latin.woff2'), HEADLINE, { targetFormat: 'woff2' }));

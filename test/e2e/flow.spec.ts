@@ -48,7 +48,8 @@ test('fills one stay, quarterly with stamp boxes, and downloads a PDF', async ({
   await page.getByLabel('One receipt for every month or quarter').selectOption('quarterly');
   await expect(page.getByText('3 receipts, one a quarter')).toBeVisible();
   await page.getByLabel('Add a signature line and revenue-stamp box').check();
-  await page.getByRole('button', { name: 'Cash' }).click();
+  await page.getByRole('radio', { name: 'Cash' }).check();
+  await expect(page.getByRole('radio', { name: 'Cash' })).toBeChecked();
   await expect(page.getByText('put a ₹1 revenue stamp on each receipt')).toBeVisible();
 
   await page.getByRole('button', { name: 'Generate 3 receipts' }).click();
@@ -121,7 +122,7 @@ test('the Why dialog opens, closes on Escape and returns focus', async ({ page }
   await expect(open).toBeFocused();
 });
 
-test('the page cannot send data anywhere: fetch is blocked by the CSP', async ({ page }) => {
+test('the CSP blocks fetch: the page has no way to upload what you type', async ({ page }) => {
   await page.goto('/');
   const result = await page.evaluate(async () => {
     try {
@@ -159,6 +160,132 @@ test('no horizontal scroll', async ({ page }) => {
   await page.getByRole('button', { name: '+ Add another stay' }).click();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+async function fillStay(page: Page, name: string) {
+  await page.getByLabel('Your name').fill(name);
+  await page.getByLabel('Monthly rent in rupees').fill('28000');
+  await page.getByLabel('House address').fill('14, 2nd Cross, Indiranagar, Bengaluru 560038');
+  await page.getByLabel('House owner’s full name').fill('K. S. Venkatesh');
+}
+
+/** Holds back requests matching `pattern` until the returned function is called. */
+async function hold(page: Page, pattern: RegExp): Promise<() => void> {
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  await page.route(pattern, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  return release;
+}
+
+test('an edit while the PDF is being made drops that PDF; the next one has the edit', async ({ page }) => {
+  const release = await hold(page, /\/assets\/generate-[^/]*\.js$/); // a slow connection
+  await page.goto('/');
+  await fillStay(page, 'Priya');
+  await page.getByRole('button', { name: /^Generate/ }).click();
+  await expect(page.getByRole('button', { name: 'Making your PDF…' })).toBeVisible();
+  await page.getByLabel('Your name').fill('Priya Raghavan');
+  release();
+  await expect(page.getByRole('button', { name: /^Generate/ })).toBeEnabled();
+  await page.waitForTimeout(500); // give the stale PDF time to (wrongly) show up
+  await expect(page.getByRole('heading', { name: /ready as one PDF/ })).toHaveCount(0);
+
+  await page.getByRole('button', { name: /^Generate/ }).click();
+  await expect(page.locator('.slip-sentence').first()).toContainText('from Priya Raghavan the sum of');
+});
+
+test('a box ticked before the script loaded stays ticked, without errors', async ({ page }) => {
+  const problems = watch(page);
+  const release = await hold(page, /\/assets\/index-[^/]*\.js$/);
+  await page.goto('/', { waitUntil: 'commit' });
+  await page.locator('#sign-1').check(); // the checkbox ends up focused
+  release();
+  await expect(page.getByRole('button', { name: 'Why use this?' })).toBeVisible();
+  await expect(page.getByLabel('Add a signature line and revenue-stamp box')).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Cash' })).toBeVisible();
+  expect(problems).toEqual([]);
+});
+
+test('Enter on a pay-mode choice picks it, and on the checkbox does nothing; neither submits', async ({ page }) => {
+  await page.goto('/');
+  const box = page.getByLabel('Add a signature line and revenue-stamp box');
+  await box.check();
+  await box.focus();
+  await page.keyboard.press('Enter');
+  await expect(box).toBeChecked();
+  const cash = page.getByRole('radio', { name: 'Cash' });
+  await cash.focus();
+  await page.keyboard.press('Enter');
+  await expect(cash).toBeChecked();
+  await expect(cash).toBeFocused();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('what was typed before the script loaded is kept, with the cursor', async ({ page }) => {
+  const release = await hold(page, /\/assets\/index-[^/]*\.js$/);
+  await page.goto('/', { waitUntil: 'commit' });
+  await page.locator('#tenant').fill('Priya Raghavan'); // the pre-rendered form
+  await page.locator('#from-1-m').selectOption('5'); // June
+  await page.locator('#owner-1').fill('K. S. Venkatesh');
+  release();
+  await expect(page.getByRole('button', { name: 'Why use this?' })).toBeVisible(); // the script has run
+  await expect(page.getByLabel('Your name')).toHaveValue('Priya Raghavan');
+  await expect(page.getByLabel('House owner’s full name')).toHaveValue('K. S. Venkatesh');
+  await expect(page.getByLabel('House owner’s full name')).toBeFocused();
+  await expect(page.getByLabel('From month')).toHaveValue('5');
+  await expect(page.getByLabel('Till month')).toHaveValue('9'); // untouched: today's default (Oct 2026)
+});
+
+test('names the PDF cannot print stop Generate and are highlighted', async ({ page }) => {
+  await page.goto('/');
+  await fillStay(page, 'प्रिया');
+  await page.getByRole('button', { name: /^Generate/ }).click();
+  await expect(page.getByRole('alert')).toContainText('Please retype in English: your name');
+  await expect(page.getByLabel('Your name')).toBeFocused();
+  await expect(page.getByRole('heading', { name: /ready as one PDF/ })).toHaveCount(0);
+});
+
+test('the Why dialog stays open on a click inside it and closes on the backdrop', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Why use this?' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Why use this?' });
+  const box = (await dialog.boundingBox())!;
+  await page.mouse.click(box.x + 8, box.y + box.height / 2); // the card's edge, inside it
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(box.x + box.width / 2, Math.max(2, box.y - 10)); // the backdrop above it
+  await expect(dialog).toBeHidden();
+});
+
+test('a pasted PAN with spaces keeps all 10 characters', async ({ page }) => {
+  await page.goto('/');
+  const pan = page.getByLabel('Owner’s PAN, optional');
+  await pan.focus();
+  await page.keyboard.insertText('abcpv 1234 k');
+  await expect(pan).toHaveValue('ABCPV1234K');
+  await page.keyboard.insertText('ZZ');
+  await expect(pan).toHaveValue('ABCPV1234K');
+});
+
+test('removing a stay moves focus to the stay before it', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '+ Add another stay' }).click();
+  await page.getByRole('button', { name: 'Remove stay 2' }).click();
+  await expect(page.locator('section.stay')).toHaveCount(1);
+  await expect(page.locator('#stay-1-title')).toBeFocused();
+});
+
+test('a long name stays inside the card', async ({ page }) => {
+  await page.goto('/');
+  const owner = page.getByLabel('House owner’s full name');
+  await owner.fill('Sri Venkata Lakshmi Narasimha Rao Chowdary Kondapalli Family Trust of Bengaluru');
+  const spill = await owner.evaluate((el) => {
+    const paper = el.closest('.paper')!;
+    const inner = paper.getBoundingClientRect().right - parseFloat(getComputedStyle(paper).paddingRight);
+    return el.getBoundingClientRect().right - inner;
+  });
+  expect(spill).toBeLessThanOrEqual(0.5);
 });
 
 test('crawlers and first paint get the receipt without JavaScript; the sample receipt loads', async ({ page, request }) => {
