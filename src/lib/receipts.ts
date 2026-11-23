@@ -113,7 +113,7 @@ export function rentByFinancialYear(stays: Stay[]): Map<Month, number> {
 /**
  * Whether the owner's PAN is needed for this stay: total rent in any financial
  * year the stay touches, across all stays, is above ₹1,00,000. (Stricter reading:
- * the sources don't settle whether the limit is per landlord; see notes/rules.md.)
+ * the sources don't settle whether the limit is per landlord; see docs/rules.md.)
  */
 export function panNeeded(
   stays: Stay[],
