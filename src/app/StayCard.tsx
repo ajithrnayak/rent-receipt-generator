@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Ref } from 'preact';
 import { amountInWords, formatINR } from '../lib/money.ts';
-import { MONTH_NAMES, monthIndexOf, shortLabel, toMonth, yearOf, type Month } from '../lib/months.ts';
+import { MONTH_NAMES, monthIndexOf, parseYear, shortLabel, toMonth, yearOf, type Month } from '../lib/months.ts';
 import { largestReceipt, notesFor, problemOf, stampAdvice } from '../lib/notes.ts';
 import { cleanPan, cleanRent, firstOverlap, panNeeded, periodsOf, type Frequency, type PayMode, type Stay } from '../lib/receipts.ts';
 import { FIXED, MODE_LABEL } from '../lib/wording.ts';
@@ -14,7 +14,6 @@ interface Props {
   tenant: string;
   tried: boolean;
   today: Today;
-  years: number[];
   totals: Map<Month, number>;
   dispatch: (a: Action) => void;
   onRemove: () => void;
@@ -89,7 +88,37 @@ function RentBlank({ id, rent, miss, onRent }: { id: string; rent: number | null
   );
 }
 
-function MonthPick({ id, label, value, years, onPick }: { id: string; label: string; value: Month; years: number[]; onPick: (m: Month) => void }) {
+/**
+ * The year is typed, so any year works. Digits only; it takes effect once the four
+ * digits make a valid year, and a half-typed one goes back to the stored year on leaving.
+ */
+function YearBlank({ id, year, onYear }: { id: string; year: number; onYear: (y: number) => void }) {
+  // null when not editing: show the stored year.
+  const [text, setText] = useState<string | null>(null);
+  return (
+    <input
+      id={id}
+      class="pick pick-year"
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      enterKeyHint="next"
+      value={text ?? String(year)}
+      onFocus={() => setText(String(year))}
+      onBlur={() => setText(null)}
+      onInput={(e) => {
+        const el = e.currentTarget;
+        const digits = el.value.replace(/\D/g, '').slice(0, 4);
+        if (el.value !== digits) el.value = digits;
+        setText(digits);
+        const typed = parseYear(digits);
+        if (typed !== null && typed !== year) onYear(typed);
+      }}
+    />
+  );
+}
+
+function MonthPick({ id, label, value, onPick }: { id: string; label: string; value: Month; onPick: (m: Month) => void }) {
   return (
     <span class="pair">
       <label class="sr-only" for={`${id}-m`}>{`${label} month`}</label>
@@ -97,14 +126,12 @@ function MonthPick({ id, label, value, years, onPick }: { id: string; label: str
         {MONTH_NAMES.map((name, i) => <option value={String(i)}>{name}</option>)}
       </select>
       <label class="sr-only" for={`${id}-y`}>{`${label} year`}</label>
-      <select id={`${id}-y`} class="pick" value={String(yearOf(value))} onChange={(e) => onPick(toMonth(Number(e.currentTarget.value), monthIndexOf(value)))}>
-        {years.map((y) => <option value={String(y)}>{y}</option>)}
-      </select>
+      <YearBlank id={`${id}-y`} year={yearOf(value)} onYear={(y) => onPick(toMonth(y, monthIndexOf(value)))} />
     </span>
   );
 }
 
-export function StayCard({ stay, index, stays, tenant, tried, today, years, totals, dispatch, onRemove, tenantRef, showPanNote }: Props) {
+export function StayCard({ stay, index, stays, tenant, tried, today, totals, dispatch, onRemove, tenantRef, showPanNote }: Props) {
   const id = stay.id;
   const set = (patch: Partial<Omit<Stay, 'id'>>) => dispatch({ type: 'stay', id, patch });
   const multi = stays.length > 1;
@@ -139,7 +166,7 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
         </div>
 
         <p>
-          Received with thanks from{' '}
+          Received from{' '}
           {index === 0 ? (
             <>
               <label class="sr-only" for="tenant">Your name</label>
@@ -166,7 +193,7 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
             <RentBlank id={`rent-${id}`} rent={stay.rent} miss={tried && !stay.rent} onRent={(rent) => set({ rent })} />
           </span>{' '}
           per month{' '}
-          {stay.rent ? <span class="words">({amountInWords(stay.rent)})</span> : null} towards rent for the house at
+          {stay.rent ? <span class="words">({amountInWords(stay.rent)})</span> : null} towards rent for the property at
         </p>
 
         <div>
@@ -181,8 +208,8 @@ export function StayCard({ stay, index, stays, tenant, tried, today, years, tota
             <option value="monthly">month</option>
             <option value="quarterly">quarter</option>
           </select>{' '}
-          from <MonthPick id={`from-${id}`} label="From" value={stay.from} years={years} onPick={(from) => set({ from })} /> to{' '}
-          <MonthPick id={`till-${id}`} label="Till" value={stay.till} years={years} onPick={(till) => set({ till })} />
+          from <MonthPick id={`from-${id}`} label="From" value={stay.from} onPick={(from) => set({ from })} /> to{' '}
+          <MonthPick id={`till-${id}`} label="Till" value={stay.till} onPick={(till) => set({ till })} />
           <span class="punct">.</span>
         </p>
         <p class="fill">

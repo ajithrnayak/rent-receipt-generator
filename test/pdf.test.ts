@@ -106,6 +106,9 @@ describe('fonts', () => {
     expect(text).toContain('₹28,000 (Rupees Twenty Eight Thousand only)');
     expect(text).toContain('1 April 2026 to 30 April 2026');
     expect(text).toContain('Date: 1 May 2026');
+    expect(text).toContain('Received from Priya Raghavan the sum of');
+    expect(text).toContain('towards rent for the property at');
+    expect(text).not.toContain('with thanks');
     expect(PRINTABLE_TEXT).toContain('₹');
   });
 

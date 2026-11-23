@@ -1,4 +1,4 @@
-import { toMonth } from '../lib/months.ts';
+import { parseYear, toMonth } from '../lib/months.ts';
 import { cleanPan, cleanRent, type Frequency, type Stay } from '../lib/receipts.ts';
 import type { Seed } from './state.ts';
 
@@ -36,11 +36,11 @@ export function readPrerendered(root: HTMLElement): Seed {
   const frequency = picked('freq-1');
   if (frequency !== undefined) stay.frequency = frequency as Frequency;
   for (const end of ['from', 'till'] as const) {
-    if (picked(`${end}-1-m`) === undefined && picked(`${end}-1-y`) === undefined) continue;
-    // Either menu changed: take both as they were on screen.
+    if (picked(`${end}-1-m`) === undefined && typed(`${end}-1-y`) === undefined) continue;
+    // The month menu or the year box changed: take both as they were on screen (a half-typed year is ignored).
     const month = find<HTMLSelectElement>(`${end}-1-m`)!;
-    const year = find<HTMLSelectElement>(`${end}-1-y`)!;
-    stay[end] = toMonth(Number(year.value), Number(month.value));
+    const year = parseYear(find<HTMLInputElement>(`${end}-1-y`)!.value);
+    if (year !== null) stay[end] = toMonth(year, Number(month.value));
   }
   const sign = find<HTMLInputElement>('sign-1');
   if (sign && sign.checked !== sign.defaultChecked) stay.sign = sign.checked;

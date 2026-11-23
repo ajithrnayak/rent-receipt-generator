@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'preact/hooks';
-import { shortLabel, yearOf } from '../lib/months.ts';
+import { shortLabel } from '../lib/months.ts';
 import { problemOf } from '../lib/notes.ts';
 import { buildReceipts, panNeeded, periodsOf, rentByFinancialYear, type Receipt } from '../lib/receipts.ts';
 import { initialState, reducer, today as getToday, type Seed } from './state.ts';
@@ -69,14 +69,6 @@ export function App({ seed }: { seed?: Seed }) {
   const keyRef = useRef(key);
   keyRef.current = key;
   const runRef = useRef(0);
-
-  const years = useMemo(() => {
-    const fyYear = yearOf(today.fy);
-    const all = state.stays.flatMap((s) => [yearOf(s.from), yearOf(s.till)]);
-    const lo = Math.min(fyYear - 3, ...all);
-    const hi = Math.max(fyYear + 1, ...all);
-    return Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
-  }, [state.stays, today.fy]);
 
   const missing: string[] = [];
   const notEnglish: string[] = [];
@@ -151,9 +143,10 @@ export function App({ seed }: { seed?: Seed }) {
       if (el.type === 'radio' && !el.checked) el.click();
       return;
     }
-    // On a blank, Enter moves to the next one.
-    if (!el.classList.contains('blank')) return;
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+    // In a typed field Enter never submits. On a blank it moves to the next one; in a year box it just stays.
     e.preventDefault();
+    if (!el.classList.contains('blank')) return;
     const blanks = Array.from(formRef.current?.querySelectorAll<HTMLElement>('.blank') ?? []);
     blanks[blanks.indexOf(el) + 1]?.focus();
   }
@@ -177,7 +170,6 @@ export function App({ seed }: { seed?: Seed }) {
             tenant={state.tenant}
             tried={state.tried}
             today={today}
-            years={years}
             totals={totals}
             dispatch={dispatch}
             onRemove={() => {

@@ -1,9 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
-  daysIn, fyLabel, fyStartOf, longLabel, periodOf, quarterStartOf, receiptDateOf, spanOf, spanTitle, toMonth,
+  daysIn, fyLabel, fyStartOf, longLabel, parseYear, periodOf, quarterStartOf, receiptDateOf, spanOf, spanTitle, toMonth,
 } from '../src/lib/months.ts';
 
 const m = (y: number, month1to12: number) => toMonth(y, month1to12 - 1);
+
+describe('typed years', () => {
+  it.each([
+    ['2026', 2026],
+    ['1900', 1900],
+    ['2099', 2099],
+    [' 2019 ', 2019],
+    ['20', null],
+    ['', null],
+    ['1899', null],
+    ['2100', null],
+    ['20a6', null],
+    ['02026', null],
+  ])('%j → %s', (text, year) => expect(parseYear(text)).toBe(year));
+});
 
 describe('period of a month: 1st to the real last day', () => {
   it.each([

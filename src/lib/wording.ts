@@ -42,11 +42,11 @@ export function wordingOf(r: Receipt): Wording {
     title: spanTitle(r.from, r.till),
     date: `Date: ${receiptDateOf(r.till)}`,
     sentence: [
-      { text: 'Received with thanks from ', font: 'regular' },
+      { text: 'Received from ', font: 'regular' },
       { text: r.tenant, font: 'semibold' },
       { text: ' the sum of ', font: 'regular' },
       { text: `₹${formatINR(r.amount)}`, font: 'semibold' },
-      { text: ` (${amountInWords(r.amount)}) towards rent for the house at `, font: 'regular' },
+      { text: ` (${amountInWords(r.amount)}) towards rent for the property at `, font: 'regular' },
       { text: r.address, font: 'regular' },
       { text: ', for the period ', font: 'regular' },
       { text: `${p.from} to ${p.to}`, font: 'semibold' },

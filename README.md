@@ -57,7 +57,7 @@ Node 22.18 or later. Vite, TypeScript and Preact; Vitest and Playwright for test
 
 | Path | What |
 |---|---|
-| `index.html` | Static page: headline, intro, Why dialog, footer, structured data |
+| `index.html` | Static page: headline, intro, the Why use this? / How it works / Sample receipt dialogs, footer, structured data |
 | `src/app/` | The form (Preact), mounted into `#tool` |
 | `src/lib/` | Months and dates, money and words, receipts and checks, receipt wording, printable characters |
 | `src/pdf/` | PDF layout behind a small canvas interface, drawn with LibPDF; loaded only once you start typing |

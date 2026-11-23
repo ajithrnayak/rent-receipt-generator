@@ -22,6 +22,13 @@ export function yearOf(m: Month): number {
   return Math.floor(m / 12);
 }
 
+/** A typed year: exactly four digits, 1900 to 2099; anything else (or half-typed) is null. */
+export function parseYear(text: string): number | null {
+  if (!/^\d{4}$/.test(text.trim())) return null;
+  const year = Number(text.trim());
+  return year >= 1900 && year <= 2099 ? year : null;
+}
+
 export function monthIndexOf(m: Month): number {
   return ((m % 12) + 12) % 12;
 }

@@ -59,27 +59,19 @@
       <span class="hero-title">Free rent receipt generator for HRA</span>
     </h1>
     <p class="lede">Fill in the blanks on the receipt itself and get one PDF for every month or quarter, made right here on your device.</p>
-    <button type="button" class="link-btn" id="why-open" aria-haspopup="dialog" hidden>Why use this?</button>
+    <!-- Shown by main.tsx once the dialogs work. The dialogs' text is in this HTML, so it is indexable without them. -->
+    <div class="intro-links" hidden>
+      <button type="button" class="link-btn" data-open="why" aria-haspopup="dialog">Why use this?</button>
+      <span class="intro-sep" aria-hidden="true">·</span>
+      <button type="button" class="link-btn" data-open="how" aria-haspopup="dialog">How it works</button>
+      <span class="intro-sep" aria-hidden="true">·</span>
+      <button type="button" class="link-btn" data-open="format" aria-haspopup="dialog">Sample receipt</button>
+    </div>
   </header>
 
   <main id="tool">
     <noscript><p class="noscript">This tool needs JavaScript to build your PDF on your device. Nothing is ever sent anywhere.</p></noscript>
   </main>
-
-  <section class="sample" aria-labelledby="sample-title">
-    <h2 id="sample-title">Rent receipt format</h2>
-    <p>Every receipt in the PDF looks like this: half an A4 page, so two print on each sheet with a cut line between them.</p>
-    <figure>
-      <img src="/sample-receipt.png" width="1240" height="877" loading="lazy" decoding="async" alt="A sample rent receipt for April to June 2026: received with thanks from Priya Raghavan the sum of ₹84,000 (Rupees Eighty Four Thousand only) towards rent for 14, 2nd Cross, Indiranagar, Bengaluru, for the period 1 April 2026 to 30 June 2026, dated 1 July 2026, received by K. S. Venkatesh, PAN ABCPV1234K, paid in cash, with a line for the owner’s signature and a box for a ₹1 revenue stamp.">
-      <figcaption>A sample quarterly receipt, paid in cash, with the owner’s signature line and revenue-stamp box. Made by this tool.</figcaption>
-    </figure>
-    <h3>How it works</h3>
-    <ol>
-      <li>Fill in the blanks on the receipt: your name, the monthly rent, the house address and the owner. Moved or your rent changed? Add another stay.</li>
-      <li>Choose one receipt a month or one a quarter, and add a signature line and stamp box if you need them.</li>
-      <li>Generate and download one PDF with every receipt in date order. Print it and have the owner sign each one.</li>
-    </ol>
-  </section>
 
   <aside class="extras" aria-labelledby="extras-title">
     <h2 id="extras-title">What else your employer may ask for</h2>
@@ -95,18 +87,19 @@
   <footer class="site-footer">
     <p>Free, private, and made by <a href="https://ajith.xyz">Ajith</a>. Use it for rent you have actually paid.</p>
     <p>No cookies, no tracking, and nothing you type is ever sent anywhere: everything happens in your browser.</p>
+    <p>Open source under the MIT licence, on <a href="https://github.com/ajithrnayak/rent-receipt-generator">GitHub</a>.</p>
   </footer>
 </div>
 
-<dialog class="why" id="why" aria-labelledby="why-title">
-  <div class="why-inner">
-    <div class="why-head">
+<dialog class="dialog" id="why" aria-labelledby="why-title">
+  <div class="dialog-inner">
+    <div class="dialog-head">
       <h2 id="why-title">Why use this?</h2>
-      <button type="button" class="why-close" data-close aria-label="Close">
+      <button type="button" class="dialog-close" data-close aria-label="Close">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
       </button>
     </div>
-    <ul>
+    <ul class="why-list">
       <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>Nothing leaves your device</strong><span>No email, no phone number, no sign-up. Your name, address and your owner’s PAN stay in this browser tab.</span></div></li>
       <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>No ads on your receipts</strong><span>Your employer sees a rent receipt, not someone’s logo. No credits, links or branding on the PDF, just your receipts.</span></div></li>
       <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>Knows the rules</strong><span>Tells you when you need a revenue stamp, a signature or your owner’s PAN, and adds the boxes only when you want them.</span></div></li>
@@ -114,6 +107,39 @@
       <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><div><strong>A clean PDF made for printing</strong><span>Two receipts per A4 page, nothing in the margins: no web addresses, timestamps or page clutter.</span></div></li>
     </ul>
     <button type="button" class="btn btn-primary" data-close>Love it, let’s go</button>
+  </div>
+</dialog>
+
+<dialog class="dialog" id="how" aria-labelledby="how-title">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2 id="how-title">How it works</h2>
+      <button type="button" class="dialog-close" data-close aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <ol class="how-list">
+      <li>Fill in the blanks on the receipt: your name, the monthly rent, the house address and the owner. Moved or your rent changed? Add another stay.</li>
+      <li>Choose one receipt a month or one a quarter, and add a signature line and stamp box if you need them.</li>
+      <li>Generate and download one PDF with every receipt in date order. Print it and have the owner sign each one.</li>
+    </ol>
+    <button type="button" class="btn btn-primary" data-close>Got it</button>
+  </div>
+</dialog>
+
+<dialog class="dialog dialog-wide" id="format" aria-labelledby="format-title">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2 id="format-title">Rent receipt format</h2>
+      <button type="button" class="dialog-close" data-close aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+    <p>Every receipt in the PDF looks like this: half an A4 page, so two print on each sheet with a cut line between them.</p>
+    <figure class="format-figure">
+      <img src="/sample-receipt.png" width="1240" height="877" loading="lazy" decoding="async" alt="A sample rent receipt for April to June 2026: received from Priya Raghavan the sum of ₹84,000 (Rupees Eighty Four Thousand only) towards rent for the property at 14, 2nd Cross, Indiranagar, Bengaluru, for the period 1 April 2026 to 30 June 2026, dated 1 July 2026, received by K. S. Venkatesh, PAN ABCPV1234K, paid in cash, with a line for the owner’s signature and a box for a ₹1 revenue stamp.">
+      <figcaption>A sample quarterly receipt, paid in cash, with the owner’s signature line and revenue-stamp box. Made by this tool.</figcaption>
+    </figure>
   </div>
 </dialog>
 

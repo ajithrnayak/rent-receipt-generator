@@ -89,8 +89,23 @@ test('a second stay continues the months and flags overlaps', async ({ page }) =
   const second = page.locator('section.stay').nth(1);
   await expect(second.getByLabel('From month')).toHaveValue('3'); // April
   await expect(second.getByLabel('From year')).toHaveValue('2026');
-  await second.getByLabel('From year').selectOption('2025');
+  await second.getByLabel('From year').fill('2025');
   await expect(page.getByText('Apr 2025 also appears in Stay 1')).toBeVisible();
+});
+
+test('years are typed: any year works, a half-typed one goes back', async ({ page }) => {
+  await page.goto('/');
+  const from = page.getByLabel('From year');
+  await from.fill('2019');
+  await expect(page.locator('.count')).toContainText('Apr 2019 – Oct 2026');
+  await from.fill('20');
+  await expect(page.locator('.count')).toContainText('Apr 2019 – Oct 2026'); // not yet a year: unchanged
+  await from.blur();
+  await expect(from).toHaveValue('2019');
+  await from.focus();
+  await page.keyboard.press('Enter'); // stays put, does not submit
+  await expect(from).toBeFocused();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test('a stay reaching this month says its receipt is dated in the future', async ({ page }) => {
@@ -112,15 +127,21 @@ test('the PAN note appears once, however many stays need it', async ({ page }) =
   await expect(page.getByPlaceholder('Needed')).toHaveCount(2);
 });
 
-test('the Why dialog opens, closes on Escape and returns focus', async ({ page }) => {
-  await page.goto('/');
-  const open = page.getByRole('button', { name: 'Why use this?' });
-  await open.click();
-  await expect(page.getByRole('dialog', { name: 'Why use this?' })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('dialog')).toBeHidden();
-  await expect(open).toBeFocused();
-});
+for (const [button, title] of [
+  ['Why use this?', 'Why use this?'],
+  ['How it works', 'How it works'],
+  ['Sample receipt', 'Rent receipt format'],
+]) {
+  test(`the “${button}” dialog opens, closes on Escape and returns focus`, async ({ page }) => {
+    await page.goto('/');
+    const open = page.getByRole('button', { name: button });
+    await open.click();
+    await expect(page.getByRole('dialog', { name: title })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(open).toBeFocused();
+  });
+}
 
 test('the CSP blocks fetch: the page has no way to upload what you type', async ({ page }) => {
   await page.goto('/');
@@ -228,6 +249,7 @@ test('what was typed before the script loaded is kept, with the cursor', async (
   await page.goto('/', { waitUntil: 'commit' });
   await page.locator('#tenant').fill('Priya Raghavan'); // the pre-rendered form
   await page.locator('#from-1-m').selectOption('5'); // June
+  await page.locator('#till-1-y').fill('2027');
   await page.locator('#owner-1').fill('K. S. Venkatesh');
   release();
   await expect(page.getByRole('button', { name: 'Why use this?' })).toBeVisible(); // the script has run
@@ -235,7 +257,8 @@ test('what was typed before the script loaded is kept, with the cursor', async (
   await expect(page.getByLabel('House owner’s full name')).toHaveValue('K. S. Venkatesh');
   await expect(page.getByLabel('House owner’s full name')).toBeFocused();
   await expect(page.getByLabel('From month')).toHaveValue('5');
-  await expect(page.getByLabel('Till month')).toHaveValue('9'); // untouched: today's default (Oct 2026)
+  await expect(page.getByLabel('Till month')).toHaveValue('9'); // untouched: today's default (October)
+  await expect(page.getByLabel('Till year')).toHaveValue('2027');
 });
 
 test('names the PDF cannot print stop Generate and are highlighted', async ({ page }) => {
@@ -289,12 +312,15 @@ test('a long name stays inside the card', async ({ page }) => {
 });
 
 test('crawlers and first paint get the receipt without JavaScript; the sample receipt loads', async ({ page, request }) => {
-  // The raw HTML (no JavaScript run) already holds the receipt form and the format section.
+  // The raw HTML (no JavaScript run) already holds the receipt form and the dialogs' text.
   const html = await (await request.get('/')).text();
-  expect(html).toContain('Received with thanks from');
+  expect(html).toContain('Received from');
+  expect(html).not.toContain('with thanks');
   expect(html).toContain('Rent receipt format');
+  expect(html).toContain('How it works');
+  expect(html).toContain('href="https://github.com/ajithrnayak/rent-receipt-generator"');
   await page.goto('/');
+  await page.getByRole('button', { name: 'Sample receipt' }).click();
   const img = page.getByRole('img', { name: /A sample rent receipt/ });
-  await img.scrollIntoViewIfNeeded();
   await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth)).toBeGreaterThan(0);
 });

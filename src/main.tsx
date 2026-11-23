@@ -11,20 +11,24 @@ if (tool) {
   render(<App seed={seed} />, tool);
 }
 
-// "Why use this?" is a native <dialog> in the static HTML, so its text is indexable.
+// "Why use this?", "How it works" and "Sample receipt" are native <dialog>s in the static
+// HTML, so their text is indexable. Each [data-open] button opens the dialog with that id.
 // Escape closes it natively; focus goes back to the button that opened it.
-const dialog = document.getElementById('why') as HTMLDialogElement | null;
-const opener = document.getElementById('why-open') as HTMLButtonElement | null;
-if (dialog && opener && typeof dialog.showModal === 'function') {
-  opener.hidden = false;
-  opener.addEventListener('click', () => dialog.showModal());
-  for (const close of dialog.querySelectorAll<HTMLButtonElement>('[data-close]')) {
-    close.addEventListener('click', () => dialog.close());
+const links = document.querySelector<HTMLElement>('.intro-links');
+if (links && typeof HTMLDialogElement === 'function' && 'showModal' in HTMLDialogElement.prototype) {
+  for (const opener of links.querySelectorAll<HTMLButtonElement>('[data-open]')) {
+    const dialog = document.getElementById(opener.dataset.open!) as HTMLDialogElement | null;
+    if (!dialog) continue;
+    opener.addEventListener('click', () => dialog.showModal());
+    for (const close of dialog.querySelectorAll<HTMLButtonElement>('[data-close]')) {
+      close.addEventListener('click', () => dialog.close());
+    }
+    // Close on a click outside the card. The dialog has no padding of its own (it is on
+    // .dialog-inner), so a click that lands on the dialog element itself is on the backdrop.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', () => opener.focus());
   }
-  // Close on a click outside the card. The dialog has no padding of its own (it is on
-  // .why-inner), so a click that lands on the dialog element itself is on the backdrop.
-  dialog.addEventListener('click', (e) => {
-    if (e.target === dialog) dialog.close();
-  });
-  dialog.addEventListener('close', () => opener.focus());
+  links.hidden = false;
 }

@@ -52,12 +52,15 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 /* Header */
 .intro { display: flex; flex-direction: column; gap: 10px; }
 .intro h1 { margin: 0; font-weight: 700; }
-.hand { display: block; font-family: Caveat, "Segoe Print", "Bradley Hand", cursive; font-weight: 700; font-size: clamp(38px, 12.5vw, 112px); line-height: .98; letter-spacing: 0; color: var(--hand); transform: rotate(-2deg); transform-origin: left bottom; margin: 8px 0 36px; }
+.hand { display: block; font-family: Caveat, "Segoe Print", "Bradley Hand", cursive; font-weight: 700; font-size: clamp(38px, 12.5vw, 112px); line-height: .98; letter-spacing: 0; color: var(--hand); transform: rotate(-2deg); transform-origin: left bottom; margin: 8px 0 52px; }
 .hand-underline { position: relative; white-space: nowrap; }
 .hand-underline svg { position: absolute; left: -2%; bottom: -0.2em; width: 104%; height: .26em; overflow: visible; }
 .hand-underline path { fill: none; stroke: var(--hand); stroke-width: 5; stroke-linecap: round; }
 .hero-title { display: block; font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
 .lede { margin: 0; font-size: 17px; color: var(--muted); }
+.intro-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; }
+.intro-links[hidden] { display: none; }
+.intro-sep { color: var(--muted); }
 
 .link-btn { font: inherit; font-size: 14px; font-weight: 500; background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 8px 0; min-height: 44px; align-self: flex-start; }
 
@@ -110,6 +113,8 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 .blank-pan::placeholder { letter-spacing: 0; text-transform: none; }
 
 .pick { font: inherit; color: var(--ink); background: transparent; border: 0; border-bottom: 1.5px solid var(--ink); padding: 2px; margin: 0 2px; border-radius: 0; cursor: pointer; line-height: 1.5; }
+/* The year is typed (any year), but looks like the month menu beside it. */
+.pick-year { width: 3.6em; cursor: text; font-variant-numeric: tabular-nums; text-align: center; }
 
 .paper .fill { margin-top: -10px; font-size: 14px; line-height: 1.4; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
 .fill .link-btn { padding: 0; min-height: 32px; }
@@ -169,38 +174,33 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 @keyframes printOut { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
 .printed { animation: printOut .45s ease-out both; }
 
-/* Rent receipt format: a sample from the real PDF, and how it works */
-.sample { display: flex; flex-direction: column; gap: 12px; color: var(--body); }
-.sample h2 { margin: 0; font-size: 22px; font-weight: 700; color: var(--ink); }
-.sample h3 { margin: 12px 0 0; font-size: 17px; font-weight: 600; color: var(--ink); }
-.sample p { margin: 0; }
-.sample figure { margin: 4px 0 0; }
-.sample img { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(20,23,28,.06); }
-.sample figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
-.sample ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
-
-/* What else you'll need, footer */
-.extras { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-card); padding: 20px 24px; font-size: 15px; color: var(--body); }
-.extras h2 { margin: 0 0 8px; font-size: 17px; font-weight: 600; color: var(--ink); }
-.extras ul { margin: 0 0 10px; padding-left: 20px; }
-.extras li { margin: 4px 0; }
+/* What else your employer may ask for: plain text on the page, no box. Then the footer. */
+.extras { display: flex; flex-direction: column; gap: 10px; color: var(--body); }
+.extras h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--ink); }
+.extras ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
 .extras p { margin: 0; }
 .site-footer { font-size: 13px; color: var(--muted); text-align: center; }
 .site-footer p { margin: 4px 0; }
 
-/* Why dialog */
+/* Dialogs: Why use this?, How it works, Sample receipt */
 /* No padding on the dialog itself: a click landing on the <dialog> element is then always on the backdrop (main.tsx). */
-.why { border: 0; padding: 0; border-radius: var(--r-card); max-width: 520px; width: calc(100% - 40px); max-height: 90vh; max-height: 90dvh; overflow: hidden; box-shadow: 0 20px 60px rgba(20,23,28,.25); color: var(--ink); }
-.why::backdrop { background: rgba(20,23,28,.45); }
-.why-inner { display: flex; flex-direction: column; gap: 18px; padding: 28px; max-height: 90vh; max-height: 90dvh; overflow: auto; }
-.why-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.why h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.25; }
-.why-close { font: inherit; background: #F3F4F6; border: 0; border-radius: 999px; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink); }
-.why ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
-.why li { display: flex; gap: 12px; align-items: flex-start; }
-.why li svg { flex-shrink: 0; margin-top: 2px; color: var(--ok-ink); }
-.why li strong { display: block; font-size: 16px; font-weight: 600; }
-.why li span { font-size: 15px; color: var(--muted); }
+.dialog { border: 0; padding: 0; border-radius: var(--r-card); max-width: 520px; width: calc(100% - 40px); max-height: 90vh; max-height: 90dvh; overflow: hidden; box-shadow: 0 20px 60px rgba(20,23,28,.25); color: var(--ink); }
+.dialog-wide { max-width: 760px; }
+.dialog::backdrop { background: rgba(20,23,28,.45); }
+.dialog-inner { display: flex; flex-direction: column; gap: 18px; padding: 28px; max-height: 90vh; max-height: 90dvh; overflow: auto; }
+.dialog-inner > p { margin: 0; color: var(--body); }
+.dialog-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dialog h2 { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.25; }
+.dialog-close { font: inherit; background: #F3F4F6; border: 0; border-radius: 999px; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink); }
+.why-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.why-list li { display: flex; gap: 12px; align-items: flex-start; }
+.why-list li svg { flex-shrink: 0; margin-top: 2px; color: var(--ok-ink); }
+.why-list li strong { display: block; font-size: 16px; font-weight: 600; }
+.why-list li span { font-size: 15px; color: var(--muted); }
+.how-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; color: var(--body); }
+.format-figure { margin: 0; }
+.format-figure img { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-ctl); }
+.format-figure figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
 
 .noscript { background: var(--paper); border-radius: var(--r-card); padding: 20px 24px; margin: 0; }
 
@@ -217,7 +217,7 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
 /* Phones: one blank per line */
 @media (max-width: 520px) {
   .page { padding: 32px 16px 48px; }
-  .hand { margin-bottom: 26px; }
+  .hand { margin-bottom: 38px; }
   .hero-title { font-size: 24px; }
   .blank, .pick { display: block; width: 100%; max-width: 100%; margin: 4px 0; min-height: 44px; }
   .blank-rent, .blank-pan, .blank-wide { width: 100%; min-width: 0; }
@@ -232,7 +232,7 @@ a:hover, .link-btn:hover { color: var(--accent-hover); }
   .pick.pick-inline { display: inline-block; width: auto; margin: 0 2px; }
   .pair { display: flex; gap: 12px; }
   .pair .pick { flex: 1; min-width: 0; }
-  .pair .pick + label + .pick { flex: 0 0 38%; }
+  .pair .pick-year { flex: 0 0 38%; width: auto; text-align: left; }
   .go { position: sticky; bottom: 0; z-index: 5; flex-direction: column; align-items: stretch; flex-wrap: nowrap; margin: 0 -16px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgba(20,23,28,.06); gap: 6px; }
   .go .btn-primary { flex: none; min-width: 0; width: 100%; }
   .trust { justify-content: center; font-size: 13px; }

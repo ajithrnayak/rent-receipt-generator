@@ -37,8 +37,13 @@ test('accessibility: empty, filled, errors, results and dialog', async ({ page }
   await page.waitForTimeout(1200); // let the slide-in finish so colours are final
   await scan(page, 'results');
 
-  await page.getByRole('button', { name: 'Why use this?' }).click();
-  await scan(page, 'Why dialog');
+  for (const name of ['Why use this?', 'How it works', 'Sample receipt']) {
+    await page.getByRole('button', { name }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await scan(page, `${name} dialog`);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+  }
 });
 
 test('keyboard only: fill, generate and download without a mouse', async ({ page, browserName }) => {
